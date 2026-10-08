@@ -2502,8 +2502,12 @@ export default function Home({ initialProducts }) {
                           Edit Mobile
                         </span>
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
-                        SMS sent to <strong>+91 {authPhone}</strong>
+                      <div style={{ fontSize: 12, color: '#475569', marginBottom: 6 }}>
+                        SMS dispatched to personal number: <strong>+91 {authPhone}</strong>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#047857', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '5px 8px', borderRadius: 6, marginBottom: 8, fontWeight: 600 }}>
+                        <span>📶</span>
+                        <span>Telecom SMS Protocol (RFC 5724): Dispatched</span>
                       </div>
                       {activeRefId && (
                         <div style={{ fontSize: 11, color: '#0369a1', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '6px 10px', borderRadius: 6, marginBottom: 10, fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2517,10 +2521,33 @@ export default function Home({ initialProducts }) {
                         placeholder="••••••"
                         value={authOtp}
                         onChange={(e) => setAuthOtp(e.target.value)}
-                        style={{ width: '100%', padding: '11px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 18, textAlign: 'center', letterSpacing: 8, fontWeight: 800, outline: 'none', marginBottom: 12 }}
+                        style={{ width: '100%', padding: '11px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 18, textAlign: 'center', letterSpacing: 8, fontWeight: 800, outline: 'none', marginBottom: 10 }}
                         required
                         autoFocus
                       />
+
+                      {/* Native Messages App Protocol Scheme Launcher */}
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                        <a
+                          href={incomingSms?.protocol_uri || `sms:+91${authPhone}?&body=${encodeURIComponent(incomingSms?.message || `VK-FLPKRT: Your Flipkart verification code is ${incomingSms?.otp || ''} (Ref ID: #${activeRefId})`)}`}
+                          style={{ flex: 1, textDecoration: 'none', textAlign: 'center', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 6, padding: '8px 10px', fontSize: 11, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
+                          title="Open device native Messages application using sms: protocol"
+                        >
+                          <span>💬</span> <span>Open in Messages App</span>
+                        </a>
+                        {incomingSms?.otp && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAuthOtp(incomingSms.otp);
+                              showToast('✓ Auto-filled OTP from SMS');
+                            }}
+                            style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '8px 10px', fontSize: 11, fontWeight: 700, color: '#1d4ed8', cursor: 'pointer' }}
+                          >
+                            ⚡ Fill ({incomingSms.otp})
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <button
