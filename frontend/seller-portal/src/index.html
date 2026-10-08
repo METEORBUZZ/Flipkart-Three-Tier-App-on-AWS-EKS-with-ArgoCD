@@ -354,10 +354,8 @@
             <label style="font-size: 11px; font-weight: 800; color: #475569;">ENTER 6-DIGIT OTP:</label>
             <span onclick="switchSellerStepPhone()" style="font-size: 11px; color: #2874f0; font-weight: 700; cursor: pointer;">Change Number</span>
           </div>
-          <div id="seller-otp-sent-label" style="font-size: 12px; color: #64748b; margin-bottom: 8px;"></div>
-          <input type="text" id="seller-otp-input" maxlength="6" placeholder="••••••" required style="width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 18px; text-align: center; letter-spacing: 8px; font-weight: 800; outline: none; margin-bottom: 12px;">
-          
-          <div id="seller-otp-preview-box" style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 12px; text-align: center; display: none;"></div>
+          <div id="seller-otp-sent-label" style="font-size: 12px; color: #64748b; margin-bottom: 12px;"></div>
+          <input type="text" id="seller-otp-input" maxlength="6" placeholder="••••••" required style="width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 18px; text-align: center; letter-spacing: 8px; font-weight: 800; outline: none; margin-bottom: 14px;">
 
           <button type="submit" id="btn-seller-verify-otp" style="width: 100%; background: #2874f0; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer;">
             🏪 VERIFY OTP & ENTER WORKSPACE
@@ -365,9 +363,26 @@
         </form>
       </div>
 
-      <div style="margin-top: 16px; font-size: 11px; color: #94a3b8;">
-        Test Mobile: <code>9876543210</code> | Test OTP: <code>123456</code>
+      <div style="margin-top: 16px; font-size: 11px; color: #64748b; display: flex; align-items: center; justify-content: center; gap: 4px;">
+        <span>🔒</span> <span>Telecom SMS OTP Authentication Active</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Floating Telecom SMS Push Notification Simulation -->
+  <div id="seller-sms-banner" style="display: none; position: fixed; top: 16px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 440px; background: rgba(255, 255, 255, 0.98); border: 1px solid #cbd5e1; border-radius: 14px; box-shadow: 0 12px 35px rgba(0,0,0,0.3); padding: 12px 16px; z-index: 100000; cursor: pointer;" onclick="autofillSellerOtp()">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="font-size: 16px;">💬</span>
+        <span id="seller-sms-sender" style="font-size: 11px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">MESSAGES • VK-FLPKRT</span>
+        <span style="font-size: 10px; color: #64748b;">• now</span>
+      </div>
+      <span style="font-size: 10px; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 2px 6px; border-radius: 10px;">Tap to Auto-fill</span>
+    </div>
+    <div id="seller-sms-body" style="font-size: 12.5px; color: #1e293b; line-height: 1.4; font-weight: 500;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 4px; border-top: 1px solid #f1f5f9;">
+      <span id="seller-sms-ref" style="font-size: 11px; color: #64748b; font-weight: 600;">Ref ID: #FK-000000</span>
+      <span id="seller-sms-code" style="font-size: 13px; font-weight: 900; color: #047857; letter-spacing: 2px;"></span>
     </div>
   </div>
 
@@ -861,6 +876,30 @@
       document.getElementById('seller-otp-input').value = '';
     }
 
+    let latestSellerSms = null;
+
+    function renderSellerSmsBanner(sms) {
+      if (!sms) return;
+      latestSellerSms = sms;
+      const banner = document.getElementById('seller-sms-banner');
+      document.getElementById('seller-sms-sender').innerText = `MESSAGES • ${sms.sender || 'VK-FLPKRT'}`;
+      document.getElementById('seller-sms-body').innerText = sms.message || `Your Flipkart verification code is ${sms.otp}`;
+      document.getElementById('seller-sms-ref').innerText = `Ref ID: #${sms.ref_id || 'FK-999999'}`;
+      document.getElementById('seller-sms-code').innerText = sms.otp || '';
+      banner.style.display = 'block';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 12000);
+    }
+
+    function autofillSellerOtp() {
+      if (latestSellerSms && latestSellerSms.otp) {
+        document.getElementById('seller-otp-input').value = latestSellerSms.otp;
+        const banner = document.getElementById('seller-sms-banner');
+        if (banner) banner.style.display = 'none';
+      }
+    }
+
     async function handleSellerSendOtp(e) {
       if (e) e.preventDefault();
       const phoneInput = document.getElementById('seller-phone-input');
@@ -886,22 +925,26 @@
         });
         const data = await res.json();
         
-        document.getElementById('seller-step-phone').style.display = 'none';
-        document.getElementById('seller-step-otp').style.display = 'block';
-        document.getElementById('seller-otp-sent-label').innerHTML = `OTP sent to <strong>+91 ${cleanPhone}</strong>`;
-
-        const previewBox = document.getElementById('seller-otp-preview-box');
-        if (data.otp_preview || true) {
-          previewBox.innerHTML = `⚡ OTP Preview: <span style="font-size: 13px; letter-spacing: 1px;">${data.otp_preview || '123456'}</span> (or use 123456)`;
-          previewBox.style.display = 'block';
+        if (res.ok) {
+          document.getElementById('seller-step-phone').style.display = 'none';
+          document.getElementById('seller-step-otp').style.display = 'block';
+          document.getElementById('seller-otp-sent-label').innerHTML = `
+            SMS sent to <strong>+91 ${cleanPhone}</strong>
+            <div style="font-size: 11px; color: #0284c7; background: #f0f9ff; border: 1px solid #bae6fd; padding: 6px 10px; border-radius: 6px; margin-top: 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+              <span>Transaction Ref ID:</span>
+              <strong style="letter-spacing: 0.5px;">#${data.ref_id || 'FK-' + Date.now().toString().slice(-6)}</strong>
+            </div>
+          `;
+          if (data.sms) {
+            renderSellerSmsBanner(data.sms);
+          }
+        } else {
+          errBox.innerText = '✕ ' + (data.error || 'Failed to send OTP');
+          errBox.style.display = 'block';
         }
       } catch (err) {
-        document.getElementById('seller-step-phone').style.display = 'none';
-        document.getElementById('seller-step-otp').style.display = 'block';
-        document.getElementById('seller-otp-sent-label').innerHTML = `OTP sent to <strong>+91 ${cleanPhone}</strong>`;
-        const previewBox = document.getElementById('seller-otp-preview-box');
-        previewBox.innerHTML = `⚡ Test OTP: 123456`;
-        previewBox.style.display = 'block';
+        errBox.innerText = '✕ Could not reach authentication gateway. Please try again.';
+        errBox.style.display = 'block';
       } finally {
         sendBtn.innerText = '📲 REQUEST SELLER OTP';
       }
@@ -938,23 +981,16 @@
           document.getElementById('seller-nav-badge').innerText = `🏪 Verified Seller: +91 ${activeSellerPhone}`;
           loadCatalogListings();
         } else {
-          errBox.innerText = '✕ ' + (data.error || 'Invalid OTP. Please try 123456.');
+          errBox.innerText = '✕ ' + (data.error || 'Invalid or expired OTP. Please try again.');
           errBox.style.display = 'block';
         }
       } catch (err) {
-        if (otp === '123456' || otp.length === 6) {
-          sessionStorage.setItem('fk_seller_auth', 'verified-seller-session');
-          sessionStorage.setItem('fk_seller_phone', activeSellerPhone);
-          document.getElementById('seller-auth-gate').style.display = 'none';
-          document.getElementById('seller-nav-badge').innerText = `🏪 Verified Seller: +91 ${activeSellerPhone}`;
-          loadCatalogListings();
-        } else {
-          errBox.innerText = '✕ Invalid OTP. Use test OTP 123456.';
-          errBox.style.display = 'block';
-        }
+        errBox.innerText = '✕ Verification failed. Please check network connection.';
+        errBox.style.display = 'block';
       } finally {
         verifyBtn.innerText = '🏪 VERIFY OTP & ENTER WORKSPACE';
       }
+    }
     }
 
     function sellerLogout() {

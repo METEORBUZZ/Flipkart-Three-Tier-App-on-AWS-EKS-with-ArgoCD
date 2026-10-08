@@ -144,13 +144,14 @@ export default function Home({ initialProducts }) {
   const [currentAddress, setCurrentAddress] = useState('HOME N G hostel A, Gangotri, Visnagar Road...');
   const [showAddressModal, setShowAddressModal] = useState(false);
 
-  // User Auth State with Mobile No + OTP
+  // User Auth State with Secure Mobile No + Unique Reference SMS OTP
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authPhone, setAuthPhone] = useState('9876543210');
   const [authOtp, setAuthOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [otpPreview, setOtpPreview] = useState('');
+  const [activeRefId, setActiveRefId] = useState('');
+  const [incomingSms, setIncomingSms] = useState(null);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -636,15 +637,17 @@ export default function Home({ initialProducts }) {
       const data = await res.json();
       if (res.ok) {
         setOtpSent(true);
-        setOtpPreview(data.otp_preview || '123456');
-        showToast(`OTP sent to +91 ${cleanPhone}`);
+        setActiveRefId(data.ref_id || `FK-${Date.now().toString().slice(-6)}`);
+        if (data.sms) {
+          setIncomingSms(data.sms);
+          setTimeout(() => setIncomingSms(null), 12000);
+        }
+        showToast(`OTP sent via SMS to +91 ${cleanPhone}`);
       } else {
         setAuthError(data.error || 'Failed to send OTP');
       }
     } catch (err) {
-      setOtpSent(true);
-      setOtpPreview('123456');
-      showToast(`OTP sent to +91 ${cleanPhone}`);
+      setAuthError('Could not connect to authentication gateway. Please try again.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -790,6 +793,54 @@ export default function Home({ initialProducts }) {
           whiteSpace: 'nowrap'
         }}>
           {toastMessage}
+        </div>
+      )}
+
+      {/* Authentic Telecom SMS Push Notification Simulation */}
+      {incomingSms && (
+        <div
+          onClick={() => {
+            if (incomingSms.otp) {
+              setAuthOtp(incomingSms.otp);
+              showToast('✓ Auto-filled OTP from SMS');
+              setIncomingSms(null);
+            }
+          }}
+          style={{
+            position: 'fixed',
+            top: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '92%',
+            maxWidth: 460,
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid #cbd5e1',
+            borderRadius: 14,
+            boxShadow: '0 12px 35px rgba(0,0,0,0.22), 0 4px 10px rgba(0,0,0,0.1)',
+            padding: '12px 16px',
+            zIndex: 10000,
+            cursor: 'pointer',
+            animation: 'slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}
+          title="Click to auto-fill OTP"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 16 }}>💬</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#0f172a', letterSpacing: 0.5 }}>MESSAGES • {incomingSms.sender || 'VK-FLPKRT'}</span>
+              <span style={{ fontSize: 10, color: '#64748b' }}>• now</span>
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#2563eb', background: '#eff6ff', padding: '2px 6px', borderRadius: 10 }}>Tap to Auto-fill</span>
+          </div>
+          <div style={{ fontSize: 12.5, color: '#1e293b', lineHeight: 1.4, fontWeight: 500 }}>
+            {incomingSms.message}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, paddingTop: 4, borderTop: '1px solid #f1f5f9' }}>
+            <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Ref ID: #{incomingSms.ref_id}</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: '#047857', letterSpacing: 2 }}>{incomingSms.otp}</span>
+          </div>
         </div>
       )}
 
@@ -2453,26 +2504,26 @@ export default function Home({ initialProducts }) {
                           Edit Mobile
                         </span>
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
-                        OTP sent to <strong>+91 {authPhone}</strong>
+                      <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+                        SMS sent to <strong>+91 {authPhone}</strong>
                       </div>
+                      {activeRefId && (
+                        <div style={{ fontSize: 11, color: '#0369a1', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '6px 10px', borderRadius: 6, marginBottom: 10, fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>Transaction Ref ID:</span>
+                          <strong style={{ letterSpacing: 0.5 }}>#{activeRefId}</strong>
+                        </div>
+                      )}
                       <input
                         type="text"
                         maxLength="6"
                         placeholder="••••••"
                         value={authOtp}
                         onChange={(e) => setAuthOtp(e.target.value)}
-                        style={{ width: '100%', padding: '11px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 18, textAlign: 'center', letterSpacing: 8, fontWeight: 800, outline: 'none' }}
+                        style={{ width: '100%', padding: '11px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 18, textAlign: 'center', letterSpacing: 8, fontWeight: 800, outline: 'none', marginBottom: 12 }}
                         required
                         autoFocus
                       />
                     </div>
-
-                    {otpPreview && (
-                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '6px 10px', borderRadius: 4, fontSize: 11, fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>
-                        ⚡ OTP Preview: <span style={{ fontSize: 13, letterSpacing: 1 }}>{otpPreview}</span> (or use 123456)
-                      </div>
-                    )}
 
                     <button
                       type="submit"
