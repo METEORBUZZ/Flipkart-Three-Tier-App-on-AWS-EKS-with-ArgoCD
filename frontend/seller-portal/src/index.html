@@ -210,6 +210,70 @@
       font-size: 13px;
     }
 
+    /* Product Image Upload Styling */
+    .img-upload-box {
+      border: 2px dashed #93c5fd;
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .img-upload-box:hover {
+      border-color: var(--fk-blue);
+      background: #eff6ff;
+    }
+    .btn-img-upload {
+      background: #2874f0;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+    }
+    .btn-img-upload:hover {
+      background: #1256c4;
+    }
+    .img-preview-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      background: white;
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      text-align: left;
+    }
+    .img-preview-thumb {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+    }
+    .img-preset-pill {
+      background: #e2e8f0;
+      color: #334155;
+      border: none;
+      border-radius: 12px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .img-preset-pill:hover {
+      background: #2874f0;
+      color: white;
+    }
+
     .tab-view { display: none; }
     .tab-view.active { display: block; }
 
@@ -506,6 +570,46 @@
           <input type="number" id="p-disc" placeholder="10" value="10">
         </div>
         <div class="form-group">
+          <label>Product Image:</label>
+          <div class="img-upload-box">
+            <!-- Hidden native file input -->
+            <input type="file" id="p-img-file" accept="image/*" style="display: none;" onchange="handleImageFileSelected(event)">
+            
+            <div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn-img-upload" onclick="document.getElementById('p-img-file').click()">
+                📷 Choose Image File
+              </button>
+              <span style="font-size: 11px; color: #64748b; font-weight: 700;">OR</span>
+              <input 
+                type="text" 
+                id="p-img-url" 
+                placeholder="Paste Image URL (https://...)" 
+                style="flex: 1; min-width: 170px; padding: 7px 10px; font-size: 12px;"
+                oninput="handleImageUrlInput(this.value)"
+              >
+            </div>
+
+            <!-- Quick sample presets -->
+            <div style="margin-top: 10px; display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap;">
+              <span style="font-size: 10px; color: #64748b; font-weight: 800;">QUICK SAMPLES:</span>
+              <button type="button" class="img-preset-pill" onclick="setPresetImage('https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80', 'Google Pixel 8')">📱 Pixel</button>
+              <button type="button" class="img-preset-pill" onclick="setPresetImage('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80', 'Apple MacBook')">💻 Laptop</button>
+              <button type="button" class="img-preset-pill" onclick="setPresetImage('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80', 'Sony Headphones')">🎧 Headphones</button>
+              <button type="button" class="img-preset-pill" onclick="setPresetImage('https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80', 'Nike Sneakers')">👟 Sneakers</button>
+            </div>
+
+            <!-- Live Image Preview Box -->
+            <div id="img-preview-box" class="img-preview-row" style="display: none;">
+              <img id="img-preview-thumb" class="img-preview-thumb" src="" alt="Product Preview">
+              <div style="flex: 1;">
+                <div id="img-preview-label" style="font-weight: 700; color: #1e293b; font-size: 12px;">Selected Image</div>
+                <div style="color: #16a34a; font-weight: 600; font-size: 11px;">✓ Ready to publish</div>
+              </div>
+              <button type="button" onclick="clearSelectedImage()" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">✕ Remove</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
           <label>Description:</label>
           <textarea id="p-desc" rows="2" placeholder="Product features..." required></textarea>
         </div>
@@ -556,18 +660,85 @@
       }
     }
 
-    function openAddProductModal() { document.getElementById('product-modal').style.display = 'flex'; }
-    function closeAddProductModal() { document.getElementById('product-modal').style.display = 'none'; }
+    let currentSelectedProductImage = '';
+
+    function openAddProductModal() { 
+      document.getElementById('product-modal').style.display = 'flex'; 
+    }
+
+    function closeAddProductModal() { 
+      document.getElementById('product-modal').style.display = 'none'; 
+      clearSelectedImage();
+    }
+
+    function handleImageFileSelected(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file (PNG, JPG, WebP, GIF).');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentSelectedProductImage = e.target.result;
+        showImagePreview(currentSelectedProductImage, file.name);
+        const urlInput = document.getElementById('p-img-url');
+        if (urlInput) urlInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleImageUrlInput(url) {
+      if (url && url.trim().length > 0) {
+        currentSelectedProductImage = url.trim();
+        showImagePreview(currentSelectedProductImage, 'Web Image URL');
+      } else {
+        clearSelectedImage();
+      }
+    }
+
+    function setPresetImage(url, label) {
+      currentSelectedProductImage = url;
+      const urlInput = document.getElementById('p-img-url');
+      if (urlInput) urlInput.value = url;
+      showImagePreview(url, label);
+    }
+
+    function showImagePreview(src, label) {
+      const box = document.getElementById('img-preview-box');
+      const thumb = document.getElementById('img-preview-thumb');
+      const labelEl = document.getElementById('img-preview-label');
+      if (box && thumb && labelEl) {
+        thumb.src = src;
+        labelEl.innerText = label || 'Product Photo';
+        box.style.display = 'flex';
+      }
+    }
+
+    function clearSelectedImage() {
+      currentSelectedProductImage = '';
+      const box = document.getElementById('img-preview-box');
+      const fileInput = document.getElementById('p-img-file');
+      const urlInput = document.getElementById('p-img-url');
+      if (box) box.style.display = 'none';
+      if (fileInput) fileInput.value = '';
+      if (urlInput) urlInput.value = '';
+    }
 
     async function handleCreateProduct(e) {
       e.preventDefault();
+      const finalImage = currentSelectedProductImage || 
+        'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80';
+
       const payload = {
         seller_id: 'c0000000-0000-0000-0000-000000000001',
         title: document.getElementById('p-title').value,
         brand: document.getElementById('p-brand').value,
         price: parseFloat(document.getElementById('p-price').value),
         discount_percentage: parseFloat(document.getElementById('p-disc').value || 0),
-        images: ['https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80'],
+        images: [finalImage],
         description: document.getElementById('p-desc').value,
         specifications: { "Seller": "Ekart Verified", "Warranty": "1 Year" },
         is_assured: true
@@ -580,7 +751,7 @@
           body: JSON.stringify(payload)
         });
         if (res.ok) {
-          alert('Product added to Flipkart catalog!');
+          alert('✓ Product published with photo to Flipkart catalog!');
           closeAddProductModal();
           loadCatalogListings();
           switchTab('listings');
