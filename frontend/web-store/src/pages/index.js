@@ -25,15 +25,105 @@ const CURATED_TILES_ROW2 = [
   { id: 'jewellery', label: 'Jewellery', icon: '💍', bg: '#fff8e1' },
 ];
 
+// Interactive Play / Reels Video Feed Data
+const PLAY_REELS_DATA = [
+  {
+    id: 'reel-1',
+    creator: '@TechGuruIndia ⚡',
+    title: 'Apple iPhone 15 Blue Unboxing & Camera Test!',
+    desc: 'Dynamic island in action, 48MP main sensor takes crisp low-light photos. Available on Big Billion Days with HDFC 10% discount!',
+    productId: 'b0000000-0000-0000-0000-000000000001',
+    productTitle: 'Apple iPhone 15 (Blue, 128 GB)',
+    price: 71999,
+    likes: 1240,
+    comments: 88,
+    bgGrad: 'linear-gradient(180deg, #1e1b4b 0%, #1e3a8a 60%, #0f172a 100%)',
+    icon: '📱',
+  },
+  {
+    id: 'reel-2',
+    creator: '@AudiophileReviews 🎧',
+    title: 'Sony WH-1000XM5: The King of Noise Cancelling?',
+    desc: 'Tested inside busy metro station. Dual processor V1 eliminates ambient rumbling completely. 30 hours battery life is unbelievable!',
+    productId: 'b0000000-0000-0000-0000-000000000003',
+    productTitle: 'Sony WH-1000XM5 Wireless Headphones',
+    price: 29990,
+    likes: 890,
+    comments: 42,
+    bgGrad: 'linear-gradient(180deg, #311042 0%, #4c1d95 60%, #1e1b4b 100%)',
+    icon: '🎧',
+  },
+  {
+    id: 'reel-3',
+    creator: '@SneakerHeadsDelhi 👟',
+    title: 'Nike Air Force 1 07: How to Style with Casuals',
+    desc: 'The timeless classic white leather sneaker. Premium cushioning and stitched overlays. Must-have for your wardrobe this season.',
+    productId: 'b0000000-0000-0000-0000-000000000006',
+    productTitle: 'Nike Air Force 1 07 Casual Sneakers',
+    price: 7495,
+    likes: 2150,
+    comments: 115,
+    bgGrad: 'linear-gradient(180deg, #371b04 0%, #7c2d12 60%, #1c1917 100%)',
+    icon: '👟',
+  },
+];
+
+// Complete Flipkart Category Directory Tree
+const CATEGORY_TREE_DATA = [
+  {
+    id: 'cat-mobiles',
+    name: 'Mobiles & Tablets',
+    icon: '📱',
+    subcategories: ['5G Smartphones', 'Apple iPhones', 'Samsung Galaxy', 'Gaming Phones', 'Refurbished Mobiles', 'Tablets & iPads']
+  },
+  {
+    id: 'cat-electronics',
+    name: 'Electronics & Laptops',
+    icon: '💻',
+    subcategories: ['Thin & Light Laptops', 'Gaming Laptops', 'Smartwatches & Bands', 'Headphones & Audio', 'Computer Accessories', 'DSLR & Action Cameras']
+  },
+  {
+    id: 'cat-fashion',
+    name: 'Fashion & Footwear',
+    icon: '👗',
+    subcategories: ["Men's Casual Shirts", "Women's Ethnic Kurta Sets", 'Denim Jeans', 'Sports & Running Shoes', 'Analog & Smart Watches', 'Fashion Jewellery']
+  },
+  {
+    id: 'cat-appliances',
+    name: 'TVs & Appliances',
+    icon: '📺',
+    subcategories: ['4K Smart TVs', 'Inverter Air Conditioners', 'Double Door Refrigerators', 'Front Load Washing Machines', 'Microwave Ovens', 'Air Purifiers']
+  },
+  {
+    id: 'cat-beauty',
+    name: 'Beauty & Personal Care',
+    icon: '💄',
+    subcategories: ['Luxury Perfumes & Deos', 'Skincare & Sunscreens', "Men's Beard Grooming", 'Hair Styling & Dryers', 'Lipsticks & Makeup', 'Ayurvedic Wellness']
+  },
+  {
+    id: 'cat-home',
+    name: 'Home & Living',
+    icon: '🛋️',
+    subcategories: ['Living Room Sofas', 'Memory Foam Mattresses', 'Kitchen Cookware Sets', 'Curtains & Bedding', 'Home Decor Lighting', 'Storage & Wardrobes']
+  }
+];
+
 export default function Home({ initialProducts }) {
   const [products, setProducts] = useState(initialProducts || []);
   const [filteredProducts, setFilteredProducts] = useState(initialProducts || []);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeTab, setActiveTab] = useState('fashion'); // 'foryou', 'fashion', 'mobiles', 'electronics', 'beauty', 'home'
+  const [activeTab, setActiveTab] = useState('fashion');
   const [activeBrandPill, setActiveBrandPill] = useState('flipkart');
   const [sortOption, setSortOption] = useState('relevance');
+
+  // Main Bottom Nav Active View: 'home' | 'play' | 'categories' | 'account'
+  const [appView, setAppView] = useState('home');
+
+  // Play Reels Likes State
+  const [reelLikes, setReelLikes] = useState({ 'reel-1': 1240, 'reel-2': 890, 'reel-3': 2150 });
+  const [likedReels, setLikedReels] = useState({});
 
   // Countdown Timer state: 1 Hr 46 Min 09 Sec
   const [timeLeft, setTimeLeft] = useState({ hrs: 1, mins: 46, secs: 9 });
@@ -63,6 +153,19 @@ export default function Home({ initialProducts }) {
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewComment, setNewReviewComment] = useState('');
 
+  // Customer Q&A State
+  const [productQuestions, setProductQuestions] = useState([]);
+  const [newQuestionText, setNewQuestionText] = useState('');
+  const [replyingQId, setReplyingQId] = useState(null);
+  const [newAnswerText, setNewAnswerText] = useState('');
+
+  // Buyer-to-Seller Live Chat State
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatProduct, setChatProduct] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInputText, setChatInputText] = useState('');
+  const [isSendingChat, setIsSendingChat] = useState(false);
+
   // Checkout & Order State
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [checkoutProduct, setCheckoutProduct] = useState(null);
@@ -88,7 +191,7 @@ export default function Home({ initialProducts }) {
         if (prev.secs > 0) return { ...prev, secs: prev.secs - 1 };
         if (prev.mins > 0) return { ...prev, mins: prev.mins - 1, secs: 59 };
         if (prev.hrs > 0) return { hrs: prev.hrs - 1, mins: 59, secs: 59 };
-        return { hrs: 2, mins: 0, secs: 0 }; // reset
+        return { hrs: 2, mins: 0, secs: 0 };
       });
     }, 1000);
     return () => clearInterval(timer);
@@ -111,6 +214,7 @@ export default function Home({ initialProducts }) {
   useEffect(() => {
     if (user) {
       fetchCart();
+      fetchUserOrders();
     }
   }, [user]);
 
@@ -142,6 +246,19 @@ export default function Home({ initialProducts }) {
     }
   };
 
+  const fetchUserOrders = async () => {
+    const uid = user ? user.id : 'usr-guest-84';
+    try {
+      const res = await fetch(`/api/v1/orders/user/${uid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserOrders(data);
+      }
+    } catch (e) {
+      setUserOrders([]);
+    }
+  };
+
   const handleSearchInput = async (text) => {
     setSearchQuery(text);
     if (text.length >= 2) {
@@ -164,6 +281,7 @@ export default function Home({ initialProducts }) {
   const executeSearch = async (term) => {
     const query = term !== undefined ? term : searchQuery;
     setShowSuggestions(false);
+    setAppView('home');
     if (!query.trim()) {
       setFilteredProducts(products);
       return;
@@ -185,6 +303,7 @@ export default function Home({ initialProducts }) {
 
   const switchPurpleTab = (tabId) => {
     setActiveTab(tabId);
+    setAppView('home');
     if (tabId === 'foryou' || tabId === 'fashion') {
       setFilteredProducts(products);
     } else if (tabId === 'mobiles') {
@@ -268,18 +387,207 @@ export default function Home({ initialProducts }) {
     }
   };
 
+  // Open Product Modal & Load Reviews + Q&A
   const openProductModal = async (product) => {
     setSelectedProduct(product);
     setPincodeResult(null);
+    setProductReviews([]);
+    setProductQuestions([]);
+
+    // Fetch Reviews
     try {
       const res = await fetch(`/api/v1/reviews/product/${product.id}`);
       if (res.ok) {
         const data = await res.json();
-        setProductReviews(data);
+        setProductReviews(data.reviews || []);
       }
     } catch (e) {
       setProductReviews([]);
     }
+
+    // Fetch Q&A
+    try {
+      const qaRes = await fetch(`/api/v1/reviews/qa/product/${product.id}`);
+      if (qaRes.ok) {
+        const qaData = await qaRes.json();
+        setProductQuestions(qaData.questions || []);
+      }
+    } catch (e) {
+      setProductQuestions([]);
+    }
+  };
+
+  // Helpful Upvote on Review
+  const markReviewHelpful = async (reviewId) => {
+    try {
+      const res = await fetch(`/api/v1/reviews/${reviewId}/helpful`, { method: 'POST' });
+      if (res.ok) {
+        const updated = await res.json();
+        setProductReviews(prev => prev.map(r => r.id === reviewId ? { ...r, helpful_count: updated.helpful_count } : r));
+        showToast('✓ Marked review as helpful');
+      }
+    } catch (e) {
+      showToast('✓ Marked helpful');
+    }
+  };
+
+  // Submit Product Review
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!selectedProduct) return;
+    try {
+      const res = await fetch('/api/v1/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: selectedProduct.id,
+          user_id: user ? user.id : 'usr-guest-84',
+          user_name: user ? user.username : 'Flipkart Customer',
+          rating: newReviewRating,
+          comment: newReviewComment,
+          is_verified_buyer: true
+        })
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setProductReviews([saved, ...productReviews]);
+        setNewReviewComment('');
+        showToast('✓ Review posted successfully');
+      }
+    } catch (e) {
+      showToast('✓ Review saved');
+    }
+  };
+
+  // Post Customer Question
+  const handlePostQuestion = async (e) => {
+    e.preventDefault();
+    if (!newQuestionText.trim() || !selectedProduct) return;
+    try {
+      const res = await fetch('/api/v1/reviews/qa/question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: selectedProduct.id,
+          user_id: user ? user.id : 'usr-guest-84',
+          user_name: user ? user.username : 'Flipkart Customer',
+          question: newQuestionText.trim()
+        })
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setProductQuestions([created, ...productQuestions]);
+        setNewQuestionText('');
+        showToast('✓ Question posted! Community & seller notified.');
+      }
+    } catch (e) {
+      showToast('Question submitted');
+    }
+  };
+
+  // Post Answer to Question
+  const handlePostAnswer = async (questionId) => {
+    if (!newAnswerText.trim()) return;
+    try {
+      const res = await fetch('/api/v1/reviews/qa/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question_id: questionId,
+          user_id: user ? user.id : 'usr-guest-84',
+          user_name: user ? user.username : 'Flipkart Customer',
+          is_seller: false,
+          answer: newAnswerText.trim()
+        })
+      });
+      if (res.ok) {
+        const createdAns = await res.json();
+        setProductQuestions(prev => prev.map(q => {
+          if (q.id === questionId) {
+            const currentAnswers = q.answers || [];
+            return { ...q, answers: [...currentAnswers, createdAns] };
+          }
+          return q;
+        }));
+        setReplyingQId(null);
+        setNewAnswerText('');
+        showToast('✓ Answer posted to community!');
+      }
+    } catch (e) {
+      showToast('Answer submitted');
+    }
+  };
+
+  // Buyer-to-Seller Live Chat
+  const openSellerChat = async (product) => {
+    setChatProduct(product);
+    setShowChatModal(true);
+    setChatMessages([]);
+    const uid = user ? user.id : 'usr-guest-84';
+    try {
+      const res = await fetch(`/api/v1/reviews/chat/${product.id}/${uid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setChatMessages(data.messages || []);
+      }
+    } catch (e) {
+      setChatMessages([]);
+    }
+  };
+
+  const handleSendChatMessage = async (e) => {
+    e.preventDefault();
+    if (!chatInputText.trim() || !chatProduct || isSendingChat) return;
+    const msg = chatInputText.trim();
+    setChatInputText('');
+    setIsSendingChat(true);
+
+    const uid = user ? user.id : 'usr-guest-84';
+    const tempBuyerMsg = {
+      id: 'tmp-' + Date.now(),
+      sender_type: 'buyer',
+      sender_name: user ? user.username : 'You',
+      message: msg,
+      created_at: new Date().toISOString()
+    };
+    setChatMessages(prev => [...prev, tempBuyerMsg]);
+
+    try {
+      const res = await fetch('/api/v1/reviews/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: chatProduct.id,
+          user_id: uid,
+          sender_type: 'buyer',
+          sender_name: user ? user.username : 'Rahul Sharma',
+          message: msg
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.auto_reply) {
+          setTimeout(() => {
+            setChatMessages(prev => [...prev, data.auto_reply]);
+          }, 600);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSendingChat(false);
+    }
+  };
+
+  // Toggle Like on Play Reel
+  const handleLikeReel = (reelId) => {
+    const isLiked = likedReels[reelId];
+    setLikedReels(prev => ({ ...prev, [reelId]: !isLiked }));
+    setReelLikes(prev => ({
+      ...prev,
+      [reelId]: isLiked ? prev[reelId] - 1 : prev[reelId] + 1
+    }));
+    showToast(isLiked ? 'Unliked video' : '❤️ Liked video! Added to your Favorites');
   };
 
   const checkEkartPincode = async () => {
@@ -300,33 +608,6 @@ export default function Home({ initialProducts }) {
         delivery_speed: 'Standard',
         courier: 'Ekart Logistics'
       });
-    }
-  };
-
-  const submitReview = async (e) => {
-    e.preventDefault();
-    if (!selectedProduct) return;
-    try {
-      const res = await fetch('/api/v1/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: selectedProduct.id,
-          userId: user ? user.id : 'usr-guest-84',
-          userName: user ? user.username : 'Flipkart Customer',
-          rating: newReviewRating,
-          comment: newReviewComment,
-          verifiedBuyer: true
-        })
-      });
-      if (res.ok) {
-        const saved = await res.json();
-        setProductReviews([saved, ...productReviews]);
-        setNewReviewComment('');
-        showToast('✓ Review submitted successfully');
-      }
-    } catch (e) {
-      showToast('✓ Review saved');
     }
   };
 
@@ -389,6 +670,7 @@ export default function Home({ initialProducts }) {
 
       setShowCheckoutModal(false);
       setShowCartDrawer(false);
+      fetchUserOrders();
     } catch (e) {
       showToast('Order confirmed! Ekart shipment assigned.');
       setShowCheckoutModal(false);
@@ -396,25 +678,10 @@ export default function Home({ initialProducts }) {
     }
   };
 
-  const openOrdersModal = async () => {
-    setShowOrdersModal(true);
-    const uid = user ? user.id : 'usr-guest-84';
-    try {
-      const res = await fetch(`/api/v1/orders/user/${uid}`);
-      if (res.ok) {
-        const data = await res.json();
-        setUserOrders(data);
-      }
-    } catch (e) {
-      setUserOrders([]);
-    }
-  };
-
-  // Format 2-digit number
   const pad2 = (n) => String(n).padStart(2, '0');
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', background: '#f1f2f4', minHeight: '100vh', position: 'relative' }}>
+    <div style={{ maxWidth: 640, margin: '0 auto', background: '#f1f2f4', minHeight: '100vh', position: 'relative', boxShadow: '0 0 25px rgba(0,0,0,0.1)' }}>
       <Head>
         <title>Flipkart Online Shopping App | Mobiles, Fashion, Electronics</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
@@ -441,15 +708,62 @@ export default function Home({ initialProducts }) {
         </div>
       )}
 
+      {/* QUICK FLOATING PILL FOR SELLER (4100) & ADMIN (4200) */}
+      <div style={{
+        position: 'fixed',
+        top: 10,
+        right: 12,
+        zIndex: 2500,
+        display: 'flex',
+        gap: 6
+      }}>
+        <a
+          href="http://10.195.18.98:4100"
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            background: 'rgba(0,0,0,0.75)',
+            color: '#ffe500',
+            textDecoration: 'none',
+            fontSize: 10,
+            fontWeight: 800,
+            padding: '4px 8px',
+            borderRadius: 12,
+            backdropFilter: 'blur(4px)'
+          }}
+          title="Open Seller Portal (Port 4100)"
+        >
+          🏪 Seller (4100)
+        </a>
+        <a
+          href="http://10.195.18.98:4200"
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            background: 'rgba(0,0,0,0.75)',
+            color: '#38bdf8',
+            textDecoration: 'none',
+            fontSize: 10,
+            fontWeight: 800,
+            padding: '4px 8px',
+            borderRadius: 12,
+            backdropFilter: 'blur(4px)'
+          }}
+          title="Open Admin Console (Port 4200)"
+        >
+          🛡️ Admin (4200)
+        </a>
+      </div>
+
       {/* =======================================================
-          TOP PURPLE HEADER SECTION (FLIPKART OFFICIAL APP UI)
+          TOP PURPLE HEADER SECTION (VISIBLE ON ALL TABS)
           ======================================================= */}
       <header className="app-top-section">
         {/* 1. Quick Switcher Pills */}
         <div className="brand-pills-row">
           <div
             className={`pill-card ${activeBrandPill === 'flipkart' ? 'pill-flipkart' : 'pill-white'}`}
-            onClick={() => setActiveBrandPill('flipkart')}
+            onClick={() => { setActiveBrandPill('flipkart'); setAppView('home'); }}
           >
             <span>🛍️</span>
             <span>Flipkart</span>
@@ -459,6 +773,7 @@ export default function Home({ initialProducts }) {
             className={`pill-card ${activeBrandPill === 'value365' ? 'pill-flipkart' : 'pill-white'}`}
             onClick={() => {
               setActiveBrandPill('value365');
+              setAppView('home');
               showToast('Switched to Value 365 store');
             }}
           >
@@ -540,297 +855,590 @@ export default function Home({ initialProducts }) {
         </div>
 
         {/* 4. Purple Category Navigation Tabs */}
-        <div className="purple-tabs-row">
-          <div
-            className={`purple-tab ${activeTab === 'foryou' ? 'active' : ''}`}
-            onClick={() => switchPurpleTab('foryou')}
-          >
-            <span className="purple-tab-icon">✨</span>
-            <span>For You</span>
-          </div>
+        {appView === 'home' && (
+          <div className="purple-tabs-row">
+            <div
+              className={`purple-tab ${activeTab === 'foryou' ? 'active' : ''}`}
+              onClick={() => switchPurpleTab('foryou')}
+            >
+              <span className="purple-tab-icon">✨</span>
+              <span>For You</span>
+            </div>
 
-          <div
-            className={`purple-tab ${activeTab === 'fashion' ? 'active' : ''}`}
-            onClick={() => switchPurpleTab('fashion')}
-          >
-            <span className="purple-tab-icon">👗</span>
-            <span>Fashion</span>
-          </div>
+            <div
+              className={`purple-tab ${activeTab === 'fashion' ? 'active' : ''}`}
+              onClick={() => switchPurpleTab('fashion')}
+            >
+              <span className="purple-tab-icon">👗</span>
+              <span>Fashion</span>
+            </div>
 
-          <div
-            className={`purple-tab ${activeTab === 'mobiles' ? 'active' : ''}`}
-            onClick={() => switchPurpleTab('mobiles')}
-          >
-            <span className="purple-tab-icon">📱</span>
-            <span>Mobiles</span>
-          </div>
+            <div
+              className={`purple-tab ${activeTab === 'mobiles' ? 'active' : ''}`}
+              onClick={() => switchPurpleTab('mobiles')}
+            >
+              <span className="purple-tab-icon">📱</span>
+              <span>Mobiles</span>
+            </div>
 
-          <div
-            className={`purple-tab ${activeTab === 'electronics' ? 'active' : ''}`}
-            onClick={() => switchPurpleTab('electronics')}
-          >
-            <span className="purple-tab-icon">💻</span>
-            <span>Electronics</span>
-          </div>
+            <div
+              className={`purple-tab ${activeTab === 'electronics' ? 'active' : ''}`}
+              onClick={() => switchPurpleTab('electronics')}
+            >
+              <span className="purple-tab-icon">💻</span>
+              <span>Electronics</span>
+            </div>
 
-          <div
-            className={`purple-tab ${activeTab === 'beauty' ? 'active' : ''}`}
-            onClick={() => switchPurpleTab('beauty')}
-          >
-            <span className="purple-tab-icon">💄</span>
-            <span>Beauty</span>
-          </div>
+            <div
+              className={`purple-tab ${activeTab === 'beauty' ? 'active' : ''}`}
+              onClick={() => switchPurpleTab('beauty')}
+            >
+              <span className="purple-tab-icon">💄</span>
+              <span>Beauty</span>
+            </div>
 
-          <div
-            className={`purple-tab ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => switchPurpleTab('home')}
-          >
-            <span className="purple-tab-icon">🛋️</span>
-            <span>Home</span>
+            <div
+              className={`purple-tab ${activeTab === 'home' ? 'active' : ''}`}
+              onClick={() => switchPurpleTab('home')}
+            >
+              <span className="purple-tab-icon">🛋️</span>
+              <span>Home</span>
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* =======================================================
-          BIG BILLION DAYS HERO BANNER
+          VIEW 1: HOME STOREFRONT VIEW
           ======================================================= */}
-      <div className="hero-banner-card" onClick={() => switchPurpleTab('fashion')}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <span className="bbd-badge">⚡ BIG BILLION DAYS</span>
-            <h2 style={{ fontSize: 17, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              India's Fashion Capital
-            </h2>
-            <div style={{ fontSize: 24, fontWeight: 900, color: '#ffe500', margin: '4px 0 6px 0' }}>
-              50-80% OFF
-            </div>
-          </div>
-          <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 12px' }}>
-            <span style={{ fontSize: 32 }}>👗</span>
-            <div style={{ fontSize: 10, fontWeight: 800, marginTop: 2 }}>Trending</div>
-          </div>
-        </div>
-
-        {/* Bank Offer Strip inside Hero Card */}
-        <div style={{
-          marginTop: 10,
-          background: 'rgba(0,0,0,0.3)',
-          borderRadius: 6,
-          padding: '6px 10px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: 11
-        }}>
-          <span>💳 <strong>HDFC Bank</strong> | 10% Instant Discount*</span>
-          <span style={{ color: '#ffe500', fontWeight: 800 }}>T&C Apply &gt;</span>
-        </div>
-
-        {/* Pagination Dots */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 10 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffe500' }}></span>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
-        </div>
-      </div>
-
-      {/* =======================================================
-          LIVE COUNTDOWN FLASH SALE STRIP
-          ======================================================= */}
-      <div className="countdown-strip">
-        <span style={{ fontSize: 15 }}>⏰</span>
-        <span>Starts in</span>
-        <span className="timer-box">{pad2(timeLeft.hrs)}</span>
-        <span style={{ fontWeight: 800 }}>Hr :</span>
-        <span className="timer-box">{pad2(timeLeft.mins)}</span>
-        <span style={{ fontWeight: 800 }}>Min :</span>
-        <span className="timer-box">{pad2(timeLeft.secs)}</span>
-        <span style={{ fontWeight: 800 }}>Sec</span>
-      </div>
-
-      {/* =======================================================
-          2-ROW HORIZONTAL SCROLL CURATED SHOPPING TILES
-          ======================================================= */}
-      <div className="curated-categories-wrapper">
-        <div className="curated-grid-scroll">
-          {CURATED_TILES_ROW1.map((item) => (
-            <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
-              <div className="curated-img-box" style={{ background: item.bg }}>
-                <span style={{ fontSize: 28 }}>{item.icon}</span>
-              </div>
-              <span className="curated-label">{item.label}</span>
-            </div>
-          ))}
-
-          {CURATED_TILES_ROW2.map((item) => (
-            <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
-              <div className="curated-img-box" style={{ background: item.bg }}>
-                <span style={{ fontSize: 28 }}>{item.icon}</span>
-              </div>
-              <span className="curated-label">{item.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* =======================================================
-          SPECIAL OFFERS / "SHOPPING FOR OTHERS?" BANNER
-          ======================================================= */}
-      <div style={{
-        background: '#ffffff',
-        margin: '8px 12px',
-        padding: '12px 14px',
-        borderRadius: 8,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 24, background: '#eef2ff', padding: 8, borderRadius: 8 }}>🎁</span>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 13, color: '#111' }}>Shopping for someone else?</div>
-            <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>Save address & send gift packs with Ekart</div>
-          </div>
-        </div>
-        <button
-          onClick={() => setShowAddressModal(true)}
-          style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
-        >
-          Add +
-        </button>
-      </div>
-
-      {/* =======================================================
-          PRODUCT SECTION HEADER & SORT CHIPS
-          ======================================================= */}
-      <div className="section-header">
-        <div>
-          <span className="section-title">Trending Catalog</span>
-          <span style={{ fontSize: 12, color: '#777', marginLeft: 8 }}>({filteredProducts.length} items)</span>
-        </div>
-
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={() => handleSort('relevance')}
-            style={{
-              background: sortOption === 'relevance' ? '#2874f0' : 'white',
-              color: sortOption === 'relevance' ? 'white' : '#555',
-              border: '1px solid #ddd',
-              padding: '4px 8px',
-              borderRadius: 14,
-              fontSize: 10,
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            Popular
-          </button>
-          <button
-            onClick={() => handleSort('price_asc')}
-            style={{
-              background: sortOption === 'price_asc' ? '#2874f0' : 'white',
-              color: sortOption === 'price_asc' ? 'white' : '#555',
-              border: '1px solid #ddd',
-              padding: '4px 8px',
-              borderRadius: 14,
-              fontSize: 10,
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            Price ⬇
-          </button>
-          <button
-            onClick={() => handleSort('rating')}
-            style={{
-              background: sortOption === 'rating' ? '#2874f0' : 'white',
-              color: sortOption === 'rating' ? 'white' : '#555',
-              border: '1px solid #ddd',
-              padding: '4px 8px',
-              borderRadius: 14,
-              fontSize: 10,
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            ★ 4.0+
-          </button>
-        </div>
-      </div>
-
-      {/* =======================================================
-          2-COLUMN MOBILE NATIVE PRODUCT GRID
-          ======================================================= */}
-      <div className="product-grid-mobile">
-        {filteredProducts.map((p) => {
-          const fallbackSrc = getProductFallback(p.title, p.brand);
-          const imageSrc = (p.images && p.images[0]) || fallbackSrc;
-
-          return (
-            <div key={p.id} className="product-card-mobile">
+      {appView === 'home' && (
+        <main>
+          {/* BIG BILLION DAYS HERO BANNER */}
+          <div className="hero-banner-card" onClick={() => switchPurpleTab('fashion')}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <div className="img-container" onClick={() => openProductModal(p)}>
-                  <img
-                    src={imageSrc}
-                    alt={p.title}
-                    className="prod-img"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = fallbackSrc;
-                    }}
-                  />
-                </div>
-
-                <div className="prod-title" onClick={() => openProductModal(p)}>
-                  {p.title}
-                </div>
-
-                <div className="badge-assured">⚡ F-Assured</div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0' }}>
-                  <span className="rating-badge">★ {p.rating || 4.5}</span>
-                  <span style={{ fontSize: 10, color: '#888' }}>({p.rating_count || 140})</span>
-                </div>
-
-                <div className="price-container">
-                  <span className="price-val">₹{Number(p.price).toLocaleString('en-IN')}</span>
-                  {p.discount_percentage > 0 && (
-                    <span className="discount-val">{p.discount_percentage}% off</span>
-                  )}
+                <span className="bbd-badge">⚡ BIG BILLION DAYS</span>
+                <h2 style={{ fontSize: 17, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  India's Fashion Capital
+                </h2>
+                <div style={{ fontSize: 24, fontWeight: 900, color: '#ffe500', margin: '4px 0 6px 0' }}>
+                  50-80% OFF
                 </div>
               </div>
-
-              {/* Action Buttons: Add & Buy */}
-              <div className="btn-card-group">
-                <button className="btn-card-add" onClick={() => addToCart(p)}>
-                  + Add
-                </button>
-                <button
-                  className="btn-card-buy"
-                  onClick={() => {
-                    setCheckoutProduct(p);
-                    setShowCheckoutModal(true);
-                  }}
-                >
-                  Buy
-                </button>
+              <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 12px' }}>
+                <span style={{ fontSize: 32 }}>👗</span>
+                <div style={{ fontSize: 10, fontWeight: 800, marginTop: 2 }}>Trending</div>
               </div>
             </div>
-          );
-        })}
-      </div>
+
+            {/* Bank Offer Strip inside Hero Card */}
+            <div style={{
+              marginTop: 10,
+              background: 'rgba(0,0,0,0.3)',
+              borderRadius: 6,
+              padding: '6px 10px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: 11
+            }}>
+              <span>💳 <strong>HDFC Bank</strong> | 10% Instant Discount*</span>
+              <span style={{ color: '#ffe500', fontWeight: 800 }}>T&C Apply &gt;</span>
+            </div>
+
+            {/* Pagination Dots */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 10 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffe500' }}></span>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
+            </div>
+          </div>
+
+          {/* LIVE COUNTDOWN FLASH SALE STRIP */}
+          <div className="countdown-strip">
+            <span style={{ fontSize: 15 }}>⏰</span>
+            <span>Starts in</span>
+            <span className="timer-box">{pad2(timeLeft.hrs)}</span>
+            <span style={{ fontWeight: 800 }}>Hr :</span>
+            <span className="timer-box">{pad2(timeLeft.mins)}</span>
+            <span style={{ fontWeight: 800 }}>Min :</span>
+            <span className="timer-box">{pad2(timeLeft.secs)}</span>
+            <span style={{ fontWeight: 800 }}>Sec</span>
+          </div>
+
+          {/* 2-ROW HORIZONTAL SCROLL CURATED SHOPPING TILES */}
+          <div className="curated-categories-wrapper">
+            <div className="curated-grid-scroll">
+              {CURATED_TILES_ROW1.map((item) => (
+                <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
+                  <div className="curated-img-box" style={{ background: item.bg }}>
+                    <span style={{ fontSize: 28 }}>{item.icon}</span>
+                  </div>
+                  <span className="curated-label">{item.label}</span>
+                </div>
+              ))}
+
+              {CURATED_TILES_ROW2.map((item) => (
+                <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
+                  <div className="curated-img-box" style={{ background: item.bg }}>
+                    <span style={{ fontSize: 28 }}>{item.icon}</span>
+                  </div>
+                  <span className="curated-label">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SPECIAL OFFERS BANNER */}
+          <div style={{
+            background: '#ffffff',
+            margin: '8px 12px',
+            padding: '12px 14px',
+            borderRadius: 8,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 24, background: '#eef2ff', padding: 8, borderRadius: 8 }}>🎁</span>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 13, color: '#111' }}>Shopping for someone else?</div>
+                <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>Save address & send gift packs with Ekart</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAddressModal(true)}
+              style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+            >
+              Add +
+            </button>
+          </div>
+
+          {/* PRODUCT SECTION HEADER & SORT CHIPS */}
+          <div className="section-header">
+            <div>
+              <span className="section-title">Trending Catalog</span>
+              <span style={{ fontSize: 12, color: '#777', marginLeft: 8 }}>({filteredProducts.length} items)</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button
+                onClick={() => handleSort('relevance')}
+                style={{
+                  background: sortOption === 'relevance' ? '#2874f0' : 'white',
+                  color: sortOption === 'relevance' ? 'white' : '#555',
+                  border: '1px solid #ddd',
+                  padding: '4px 8px',
+                  borderRadius: 14,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Popular
+              </button>
+              <button
+                onClick={() => handleSort('price_asc')}
+                style={{
+                  background: sortOption === 'price_asc' ? '#2874f0' : 'white',
+                  color: sortOption === 'price_asc' ? 'white' : '#555',
+                  border: '1px solid #ddd',
+                  padding: '4px 8px',
+                  borderRadius: 14,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Price ⬇
+              </button>
+              <button
+                onClick={() => handleSort('rating')}
+                style={{
+                  background: sortOption === 'rating' ? '#2874f0' : 'white',
+                  color: sortOption === 'rating' ? 'white' : '#555',
+                  border: '1px solid #ddd',
+                  padding: '4px 8px',
+                  borderRadius: 14,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ★ 4.0+
+              </button>
+            </div>
+          </div>
+
+          {/* 2-COLUMN MOBILE NATIVE PRODUCT GRID */}
+          <div className="product-grid-mobile">
+            {filteredProducts.map((p) => {
+              const fallbackSrc = getProductFallback(p.title, p.brand);
+              const imageSrc = (p.images && p.images[0]) || fallbackSrc;
+
+              return (
+                <div key={p.id} className="product-card-mobile">
+                  <div>
+                    <div className="img-container" onClick={() => openProductModal(p)}>
+                      <img
+                        src={imageSrc}
+                        alt={p.title}
+                        className="prod-img"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = fallbackSrc;
+                        }}
+                      />
+                    </div>
+
+                    <div className="prod-title" onClick={() => openProductModal(p)}>
+                      {p.title}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '3px 0' }}>
+                      <span className="badge-assured">⚡ F-Assured</span>
+                      <span
+                        onClick={() => openSellerChat(p)}
+                        style={{ fontSize: 10, color: '#2874f0', fontWeight: 800, cursor: 'pointer' }}
+                        title="Chat with Seller"
+                      >
+                        💬 Chat
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0' }}>
+                      <span className="rating-badge">★ {p.rating || 4.5}</span>
+                      <span style={{ fontSize: 10, color: '#888' }}>({p.rating_count || 140})</span>
+                    </div>
+
+                    <div className="price-container">
+                      <span className="price-val">₹{Number(p.price).toLocaleString('en-IN')}</span>
+                      {p.discount_percentage > 0 && (
+                        <span className="discount-val">{p.discount_percentage}% off</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons: Add & Buy */}
+                  <div className="btn-card-group">
+                    <button className="btn-card-add" onClick={() => addToCart(p)}>
+                      + Add
+                    </button>
+                    <button
+                      className="btn-card-buy"
+                      onClick={() => {
+                        setCheckoutProduct(p);
+                        setShowCheckoutModal(true);
+                      }}
+                    >
+                      Buy
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </main>
+      )}
+
+      {/* =======================================================
+          VIEW 2: FLIPKART PLAY (INTERACTIVE VIDEO REELS FEED)
+          ======================================================= */}
+      {appView === 'play' && (
+        <section className="reels-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#111' }}>▶️ Flipkart Video & Deals Live</h2>
+            <span style={{ fontSize: 11, background: '#fee2e2', color: '#b91c1c', fontWeight: 800, padding: '3px 8px', borderRadius: 12 }}>
+              🔴 3.4k Watching
+            </span>
+          </div>
+
+          {PLAY_REELS_DATA.map((reel) => {
+            const isLiked = likedReels[reel.id];
+            return (
+              <div key={reel.id} className="reel-card">
+                <div className="reel-video-placeholder" style={{ background: reel.bgGrad }}>
+                  <div className="reel-live-tag">● LIVE DEMO</div>
+
+                  {/* Vertical Interactive Action Buttons */}
+                  <div className="reel-actions-column">
+                    <button
+                      className="reel-action-btn"
+                      onClick={() => handleLikeReel(reel.id)}
+                      title="Like Video"
+                      style={{ color: isLiked ? '#ef4444' : 'white' }}
+                    >
+                      <span>{isLiked ? '❤️' : '🤍'}</span>
+                      <span className="reel-action-label">{reelLikes[reel.id]}</span>
+                    </button>
+
+                    <button
+                      className="reel-action-btn"
+                      onClick={() => {
+                        const prod = products.find(p => p.id === reel.productId) || { id: reel.productId, title: reel.productTitle, price: reel.price };
+                        openSellerChat(prod);
+                      }}
+                      title="Ask Live Question"
+                    >
+                      <span>💬</span>
+                      <span className="reel-action-label">{reel.comments}</span>
+                    </button>
+
+                    <button
+                      className="reel-action-btn"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(window.location.href);
+                        showToast('🔗 Video deal link copied to clipboard!');
+                      }}
+                      title="Share Reel"
+                    >
+                      <span>🔗</span>
+                      <span className="reel-action-label">Share</span>
+                    </button>
+                  </div>
+
+                  {/* Reel Info */}
+                  <div className="reel-info-bottom">
+                    <div style={{ fontSize: 36, marginBottom: 8 }}>{reel.icon}</div>
+                    <div className="reel-creator">{reel.creator}</div>
+                    <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 4 }}>{reel.title}</h3>
+                    <p className="reel-desc">{reel.desc}</p>
+                  </div>
+                </div>
+
+                {/* Bottom Buy Sticky Bar */}
+                <div className="reel-buy-bar">
+                  <div>
+                    <div style={{ fontSize: 11, color: '#9ca3af' }}>Featured Deal</div>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: 'white' }}>₹{Number(reel.price).toLocaleString('en-IN')}</div>
+                  </div>
+
+                  <button
+                    className="reel-buy-btn"
+                    onClick={() => {
+                      const prod = products.find(p => p.id === reel.productId) || { id: reel.productId, title: reel.productTitle, price: reel.price };
+                      setCheckoutProduct(prod);
+                      setShowCheckoutModal(true);
+                    }}
+                  >
+                    ⚡ Buy Now
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {/* =======================================================
+          VIEW 3: CATEGORIES DIRECTORY TREE
+          ======================================================= */}
+      {appView === 'categories' && (
+        <section className="cat-directory-container">
+          <h2 style={{ fontSize: 18, fontWeight: 900, marginBottom: 12, color: '#111' }}>🔲 All Flipkart Categories</h2>
+
+          {CATEGORY_TREE_DATA.map((cat) => (
+            <div key={cat.id} className="cat-directory-card">
+              <div
+                className="cat-directory-header"
+                onClick={() => {
+                  executeSearch(cat.name.split(' ')[0]);
+                }}
+              >
+                <div className="cat-icon-badge">{cat.icon}</div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: '#1e293b' }}>{cat.name}</div>
+                  <div style={{ fontSize: 11, color: '#64748b' }}>Explore top deals and brands</div>
+                </div>
+              </div>
+
+              <div className="cat-chips-list">
+                {cat.subcategories.map((sub, idx) => (
+                  <span
+                    key={idx}
+                    className="cat-chip-tag"
+                    onClick={() => executeSearch(sub)}
+                  >
+                    {sub}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* =======================================================
+          VIEW 4: USER ACCOUNT DASHBOARD
+          ======================================================= */}
+      {appView === 'account' && (
+        <section className="account-container">
+          {/* User Profile Card */}
+          <div className="account-header-card">
+            <div className="account-avatar">
+              {user ? user.username.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>{user ? user.username : 'Guest User'}</div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>+91 98765 43210 • Verified</div>
+              <div style={{ marginTop: 4 }}>
+                <span style={{ background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 800 }}>
+                  ⚡ Flipkart Plus Member
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowAuthModal(true)}
+              style={{ background: '#f1f5f9', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Switch
+            </button>
+          </div>
+
+          {/* SuperCoins Banner */}
+          <div style={{
+            background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+            color: 'white',
+            borderRadius: 10,
+            padding: '12px 16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 14
+          }}>
+            <div>
+              <div style={{ fontSize: 11, opacity: 0.9 }}>Available Balance</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: '#fde047' }}>⚡ {user ? user.superCoins || 150 : 150} SuperCoins</div>
+            </div>
+            <button
+              onClick={() => showToast('SuperCoins can be used for up to 10% instant discounts!')}
+              style={{ background: '#fde047', color: '#1e3a8a', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+            >
+              Use Coins
+            </button>
+          </div>
+
+          {/* Account Quick Grid */}
+          <div className="account-quick-grid">
+            <div className="account-nav-card" onClick={fetchUserOrders}>
+              <span style={{ fontSize: 22 }}>📦</span>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 13 }}>Orders</div>
+                <div style={{ fontSize: 10, color: '#64748b' }}>{userOrders.length} placed</div>
+              </div>
+            </div>
+
+            <div className="account-nav-card" onClick={() => setShowAddressModal(true)}>
+              <span style={{ fontSize: 22 }}>🏠</span>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 13 }}>Addresses</div>
+                <div style={{ fontSize: 10, color: '#64748b' }}>2 saved</div>
+              </div>
+            </div>
+
+            <div className="account-nav-card" onClick={() => showToast('Active Coupons: FLAT10 (10% off), EKARTFREE (Free shipping)')}>
+              <span style={{ fontSize: 22 }}>🏷️</span>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 13 }}>Coupons</div>
+                <div style={{ fontSize: 10, color: '#64748b' }}>2 available</div>
+              </div>
+            </div>
+
+            <div className="account-nav-card" onClick={() => showToast('Ekart 24/7 Helpline: 1800-208-9898')}>
+              <span style={{ fontSize: 22 }}>💬</span>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 13 }}>Help Centre</div>
+                <div style={{ fontSize: 10, color: '#64748b' }}>24x7 Ekart</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Orders Section */}
+          <div style={{ background: 'white', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>My Recent Orders</h3>
+            {userOrders.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: '#888', fontSize: 12 }}>
+                <p>No orders placed yet. Start shopping!</p>
+              </div>
+            ) : (
+              userOrders.slice(0, 3).map((ord) => (
+                <div key={ord.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: 10, marginBottom: 10, fontSize: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
+                    <span>Order #{ord.id.slice(0, 8)}...</span>
+                    <span style={{ color: '#16a34a' }}>✓ {ord.status}</span>
+                  </div>
+                  <div style={{ color: '#64748b', margin: '2px 0' }}>
+                    Ekart Waybill: <strong style={{ color: '#2563eb' }}>{ord.trackingNumber}</strong>
+                  </div>
+                  <div style={{ fontWeight: 800, marginTop: 4 }}>
+                    Total Amount: ₹{Number(ord.totalAmount).toLocaleString('en-IN')}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* MNC Portal Shortcuts */}
+          <div style={{ background: 'white', borderRadius: 12, padding: 14 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Developer & Partner Portals</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <a
+                href="http://10.195.18.98:4100"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: '#f8fafc',
+                  padding: 10,
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  color: '#1e293b',
+                  fontSize: 12,
+                  fontWeight: 700
+                }}
+              >
+                <span>🏪 Seller Portal (Add Products & Stocks)</span>
+                <span style={{ color: '#2563eb' }}>Port 4100 →</span>
+              </a>
+
+              <a
+                href="http://10.195.18.98:4200"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: '#f8fafc',
+                  padding: 10,
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  color: '#1e293b',
+                  fontSize: 12,
+                  fontWeight: 700
+                }}
+              >
+                <span>🛡️ SuperAdmin Console (Ekart & Microservices)</span>
+                <span style={{ color: '#2563eb' }}>Port 4200 →</span>
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* =======================================================
           FLIPKART OFFICIAL APP BOTTOM NAVIGATION BAR
           ======================================================= */}
       <nav className="flipkart-app-bottombar">
         <div
-          className={`bottom-tab ${activeTab === 'fashion' || activeTab === 'foryou' ? 'active' : ''}`}
+          className={`bottom-tab ${appView === 'home' ? 'active' : ''}`}
           onClick={() => {
-            setSearchQuery('');
-            switchPurpleTab('foryou');
+            setAppView('home');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
@@ -839,10 +1447,10 @@ export default function Home({ initialProducts }) {
         </div>
 
         <div
-          className="bottom-tab"
+          className={`bottom-tab ${appView === 'play' ? 'active' : ''}`}
           onClick={() => {
-            switchPurpleTab('fashion');
-            showToast('Opening Flipkart Video & Play');
+            setAppView('play');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
           <span className="bottom-tab-icon">▶️</span>
@@ -850,10 +1458,10 @@ export default function Home({ initialProducts }) {
         </div>
 
         <div
-          className={`bottom-tab ${activeTab === 'mobiles' || activeTab === 'electronics' ? 'active' : ''}`}
+          className={`bottom-tab ${appView === 'categories' ? 'active' : ''}`}
           onClick={() => {
-            switchPurpleTab('mobiles');
-            showToast('Showing All Flipkart Categories');
+            setAppView('categories');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
           <span className="bottom-tab-icon">🔲</span>
@@ -861,13 +1469,10 @@ export default function Home({ initialProducts }) {
         </div>
 
         <div
-          className="bottom-tab"
+          className={`bottom-tab ${appView === 'account' ? 'active' : ''}`}
           onClick={() => {
-            if (user) {
-              openOrdersModal();
-            } else {
-              setShowAuthModal(true);
-            }
+            setAppView('account');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
           <span className="bottom-tab-icon">👤</span>
@@ -881,52 +1486,67 @@ export default function Home({ initialProducts }) {
         </div>
       </nav>
 
-      {/* QUICK FLOATING PILL FOR SELLER (4100) & ADMIN (4200) */}
-      <div style={{
-        position: 'fixed',
-        top: 10,
-        right: 12,
-        zIndex: 2500,
-        display: 'flex',
-        gap: 6
-      }}>
-        <a
-          href="http://10.195.18.98:4100"
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            background: 'rgba(0,0,0,0.7)',
-            color: '#ffe500',
-            textDecoration: 'none',
-            fontSize: 10,
-            fontWeight: 800,
-            padding: '4px 8px',
-            borderRadius: 12,
-            backdropFilter: 'blur(4px)'
-          }}
-          title="Open Seller Portal (Port 4100)"
-        >
-          🏪 Seller (4100)
-        </a>
-        <a
-          href="http://10.195.18.98:4200"
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            background: 'rgba(0,0,0,0.7)',
-            color: '#38bdf8',
-            textDecoration: 'none',
-            fontSize: 10,
-            fontWeight: 800,
-            padding: '4px 8px',
-            borderRadius: 12,
-            backdropFilter: 'blur(4px)'
-          }}
-          title="Open Admin Console (Port 4200)"
-        >
-          🛡️ Admin (4200)
-        </a>
-      </div>
+      {/* =======================================================
+          BUYER-TO-SELLER LIVE CHAT DRAWER
+          ======================================================= */}
+      {showChatModal && chatProduct && (
+        <div className="modal-overlay" onClick={() => setShowChatModal(false)}>
+          <div className="chat-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="chat-header">
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 14 }}>💬 Brand Seller Support</div>
+                <div style={{ fontSize: 11, opacity: 0.9 }}>Product: {chatProduct.title.slice(0, 24)}...</div>
+              </div>
+              <button
+                onClick={() => setShowChatModal(false)}
+                style={{ background: 'none', border: 'none', color: 'white', fontSize: 22, cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="chat-body-messages">
+              <div style={{ textAlign: 'center', margin: '6px 0', fontSize: 11, color: '#94a3b8' }}>
+                Chatting with Verified Brand Seller • End-to-end encrypted
+              </div>
+
+              {chatMessages.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px 0', color: '#64748b', fontSize: 12 }}>
+                  <p style={{ fontSize: 32, marginBottom: 8 }}>💬</p>
+                  <p style={{ fontWeight: 700 }}>Have questions for the seller?</p>
+                  <p style={{ marginTop: 4 }}>Ask about warranty, stock availability, or delivery timeframe!</p>
+                </div>
+              ) : (
+                chatMessages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`chat-bubble ${msg.sender_type === 'buyer' ? 'bubble-buyer' : 'bubble-seller'}`}
+                  >
+                    <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.8, marginBottom: 2 }}>
+                      {msg.sender_name}
+                    </div>
+                    <div>{msg.message}</div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Chat Input Bar */}
+            <form className="chat-input-bar" onSubmit={handleSendChatMessage}>
+              <input
+                type="text"
+                className="chat-input-field"
+                placeholder="Type your message to seller..."
+                value={chatInputText}
+                onChange={(e) => setChatInputText(e.target.value)}
+              />
+              <button type="submit" className="chat-send-btn" disabled={isSendingChat}>
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* =======================================================
           DELIVERY ADDRESS MODAL
@@ -1105,7 +1725,7 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =======================================================
-          PRODUCT DETAILS SHEET
+          PRODUCT DETAILS SHEET WITH REVIEWS & CUSTOMER Q&A
           ======================================================= */}
       {selectedProduct && (
         <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
@@ -1172,8 +1792,32 @@ export default function Home({ initialProducts }) {
                 )}
               </div>
 
-              {/* Actions */}
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              {/* Chat with Seller Button */}
+              <button
+                onClick={() => openSellerChat(selectedProduct)}
+                style={{
+                  width: '100%',
+                  background: '#f0f7ff',
+                  border: '1px solid #2874f0',
+                  color: '#2874f0',
+                  padding: 9,
+                  borderRadius: 6,
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  marginBottom: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
+                }}
+              >
+                <span>💬</span>
+                <span>Chat with Official Seller (Live Support)</span>
+              </button>
+
+              {/* Primary Actions: Add to Cart & Buy Now */}
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   className="btn-card-add"
                   style={{ padding: 10, fontSize: 13 }}
@@ -1194,9 +1838,92 @@ export default function Home({ initialProducts }) {
               </div>
             </div>
 
-            {/* Customer Reviews Section */}
+            {/* CUSTOMER PRODUCT Q&A (User-to-User Community Q&A) */}
+            <div className="qa-wrapper">
+              <h4 style={{ fontSize: 13, marginBottom: 6, fontWeight: 800 }}>❓ Customer Questions & Answers</h4>
+              <p style={{ fontSize: 11, color: '#64748b', marginBottom: 10 }}>Have a question? Ask other buyers & the seller</p>
+
+              <form onSubmit={handlePostQuestion} style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                <input
+                  type="text"
+                  placeholder="Ask a question about this item..."
+                  value={newQuestionText}
+                  onChange={(e) => setNewQuestionText(e.target.value)}
+                  style={{ flex: 1, padding: '6px 10px', border: '1px solid #ccc', borderRadius: 4, fontSize: 11 }}
+                  required
+                />
+                <button type="submit" style={{ background: '#2874f0', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 4, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>
+                  Ask
+                </button>
+              </form>
+
+              {productQuestions.length === 0 ? (
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 12 }}>No questions asked yet. Post the first question above!</div>
+              ) : (
+                productQuestions.map((q) => (
+                  <div key={q.id} className="qa-card">
+                    <div className="qa-q-row">
+                      <span style={{ color: '#2563eb' }}>Q:</span>
+                      <span style={{ flex: 1 }}>{q.question}</span>
+                      <span style={{ fontSize: 10, color: '#94a3b8' }}>by {q.user_name}</span>
+                    </div>
+
+                    {/* Answers List */}
+                    {q.answers && q.answers.length > 0 ? (
+                      q.answers.map((ans, aidx) => (
+                        <div key={aidx} className="qa-a-row">
+                          <strong style={{ color: '#16a34a' }}>A:</strong> {ans.answer}
+                          {ans.is_seller && <span className="qa-seller-badge">Seller</span>}
+                          <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 6 }}>— {ans.user_name}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4, paddingLeft: 18 }}>
+                        No answers yet.
+                      </div>
+                    )}
+
+                    {/* Reply to Question Input */}
+                    {replyingQId === q.id ? (
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8, paddingLeft: 18 }}>
+                        <input
+                          type="text"
+                          placeholder="Write your answer..."
+                          value={newAnswerText}
+                          onChange={(e) => setNewAnswerText(e.target.value)}
+                          style={{ flex: 1, padding: '4px 8px', border: '1px solid #ccc', borderRadius: 4, fontSize: 11 }}
+                        />
+                        <button
+                          onClick={() => handlePostAnswer(q.id)}
+                          style={{ background: '#16a34a', color: 'white', border: 'none', padding: '4px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Submit
+                        </button>
+                        <button
+                          onClick={() => setReplyingQId(null)}
+                          style={{ background: '#e2e8f0', color: '#334155', border: 'none', padding: '4px 8px', borderRadius: 4, fontSize: 10, cursor: 'pointer' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ paddingLeft: 18, marginTop: 4 }}>
+                        <span
+                          onClick={() => setReplyingQId(q.id)}
+                          style={{ fontSize: 10, color: '#2563eb', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          + Answer this question
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* CUSTOMER REVIEWS SECTION WITH HELPFUL VOTES */}
             <div style={{ marginTop: 16, borderTop: '1px solid #eee', paddingTop: 12 }}>
-              <h4 style={{ fontSize: 13, marginBottom: 8 }}>Customer Ratings & Reviews</h4>
+              <h4 style={{ fontSize: 13, marginBottom: 8, fontWeight: 800 }}>⭐ Customer Ratings & Reviews</h4>
               <form onSubmit={submitReview} style={{ marginBottom: 10 }}>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                   <select
@@ -1218,7 +1945,7 @@ export default function Home({ initialProducts }) {
                     style={{ flex: 1, padding: '4px 8px', border: '1px solid #ccc', borderRadius: 4, fontSize: 11 }}
                     required
                   />
-                  <button type="submit" style={{ background: '#2874f0', color: 'white', border: 'none', padding: '4px 10px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                  <button type="submit" style={{ background: '#2874f0', color: 'white', border: 'none', padding: '4px 10px', borderRadius: 4, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
                     Post
                   </button>
                 </div>
@@ -1226,12 +1953,22 @@ export default function Home({ initialProducts }) {
 
               {productReviews.length > 0 ? (
                 productReviews.map((rev) => (
-                  <div key={rev.id} style={{ background: '#f9f9f9', padding: 8, borderRadius: 4, marginBottom: 6, fontSize: 11 }}>
+                  <div key={rev.id} style={{ background: '#f9f9f9', padding: 10, borderRadius: 6, marginBottom: 8, fontSize: 11 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-                      <span>★ {rev.rating} - {rev.userName || 'Verified Buyer'}</span>
+                      <span>★ {rev.rating} - {rev.user_name || 'Verified Buyer'}</span>
                       <span style={{ color: '#388e3c' }}>✓ Certified Buyer</span>
                     </div>
-                    <div style={{ color: '#444', marginTop: 2 }}>{rev.comment}</div>
+                    <div style={{ color: '#444', margin: '4px 0 6px 0' }}>{rev.comment}</div>
+
+                    {/* Helpful Vote Button */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <button
+                        className="helpful-btn"
+                        onClick={() => markReviewHelpful(rev.id)}
+                      >
+                        👍 Helpful ({rev.helpful_count || 0})
+                      </button>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -1331,40 +2068,6 @@ export default function Home({ initialProducts }) {
             >
               Continue Shopping
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* =======================================================
-          MY ORDERS MODAL
-          ======================================================= */}
-      {showOrdersModal && (
-        <div className="modal-overlay" onClick={() => setShowOrdersModal(false)}>
-          <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={() => setShowOrdersModal(false)}>✕</button>
-            <h3 style={{ fontSize: 15, marginBottom: 4 }}>My Orders</h3>
-            <p style={{ color: '#777', fontSize: 11, marginBottom: 10 }}>Past orders placed on Flipkart</p>
-
-            {userOrders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px 0', color: '#888', fontSize: 12 }}>
-                <p>No past orders recorded yet.</p>
-              </div>
-            ) : (
-              userOrders.map((ord) => (
-                <div key={ord.id} style={{ border: '1px solid #eee', padding: 8, borderRadius: 6, marginBottom: 8, fontSize: 11 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-                    <span>Order #{ord.id.slice(0, 8)}...</span>
-                    <span style={{ color: '#388e3c' }}>{ord.status}</span>
-                  </div>
-                  <div style={{ color: '#666', margin: '2px 0' }}>
-                    Ekart Tracking: <strong>{ord.trackingNumber}</strong>
-                  </div>
-                  <div style={{ fontWeight: 800, marginTop: 4 }}>
-                    Total: ₹{Number(ord.totalAmount).toLocaleString('en-IN')}
-                  </div>
-                </div>
-              ))
-            )}
           </div>
         </div>
       )}
