@@ -9,11 +9,13 @@ An enterprise-grade, polyglot microservices clone of Flipkart built with **Next.
 You can browse this shopping app directly on your smartphone (iPhone or Android) as long as your phone is on the **same Wi-Fi network** or personal hotspot as this Mac.
 
 ### Your Direct Mobile URLs:
-* **Flipkart Customer Storefront:**  
+* **🛍️ Buyer Storefront (Next.js):**  
   👉 **`http://10.195.18.98:3000`**
-* **Seller & Admin Portal:**  
+* **🏪 Seller Hub (Port 4100):**  
+  👉 **`http://10.195.18.98:4100`**
+* **🛡️ Admin Console (Port 4200):**  
   👉 **`http://10.195.18.98:4200`**
-* **API Gateway & Health Status:**  
+* **⚡ API Gateway & Health Status (Port 8000):**  
   👉 **`http://10.195.18.98:8000/health`**
 
 ### Steps to Open on Mobile:
@@ -120,8 +122,9 @@ docker compose down
 | Service | Port | Language & Framework | Primary Storage |
 | :--- | :---: | :--- | :--- |
 | **API Gateway** | `8000` | JavaScript (Express.js) | Redis Rate Limiter |
-| **Customer Storefront** | `3000` | TypeScript (Next.js) | Client SSR |
-| **Seller & Admin Portal** | `4200` | TypeScript (Angular / Nginx) | Client SPA |
+| **Buyer Storefront** | `3000` | TypeScript (Next.js) | Client SSR |
+| **Seller Hub** | `4100` | HTML5 / Nginx | Client SPA |
+| **Admin Console** | `4200` | HTML5 / Nginx | Client SPA |
 | **User & Auth** | `5001` | Python (Django REST) | PostgreSQL |
 | **Product Catalog** | `5002` | JavaScript (Express.js) | PostgreSQL (`JSONB`) |
 | **Search & Filters** | `5003` | Python (Flask) | PostgreSQL (`pg_trgm`) |

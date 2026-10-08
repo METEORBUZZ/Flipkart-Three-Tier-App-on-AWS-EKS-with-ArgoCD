@@ -1,0 +1,40 @@
+# Environment & Secrets (STRICT SECURITY RULE: Never commit secrets)
+*.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependencies & Build Artefacts
+node_modules/
+dist/
+build/
+.next/
+out/
+target/
+*.class
+*.jar
+*.war
+bin/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+
+# Logs & Runtime
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker & Database Volumes
+postgres_data/
+redis_data/

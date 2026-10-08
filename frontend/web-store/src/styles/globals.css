@@ -1,0 +1,640 @@
+:root {
+  --fk-blue: #2874f0;
+  --fk-blue-dark: #1259c7;
+  --fk-yellow: #ffe500;
+  --fk-orange: #fb641b;
+  --fk-orange-dark: #e65100;
+  --fk-green: #388e3c;
+  --fk-gray: #f1f3f6;
+  --text-dark: #212121;
+  --text-muted: #878787;
+  --border-color: #e0e0e0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--fk-gray);
+  color: var(--text-dark);
+  padding-bottom: 60px; /* Space for mobile bottom bar */
+}
+
+/* =======================================================
+   HEADER (DESKTOP & MOBILE RESPONSIVE)
+   ======================================================= */
+.header {
+  background-color: var(--fk-blue);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  width: 100%;
+}
+
+.header-inner {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logo-area {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.logo-title {
+  font-size: 20px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: -0.5px;
+}
+
+.logo-sub {
+  font-size: 10px;
+  font-style: italic;
+  color: #f0f0f0;
+}
+
+.plus {
+  color: var(--fk-yellow);
+  font-weight: 700;
+}
+
+.search-container {
+  flex: 1;
+  max-width: 600px;
+  position: relative;
+}
+
+.search-box {
+  display: flex;
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  width: 100%;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+}
+
+.search-box button {
+  background: #f8f9fa;
+  border: none;
+  padding: 0 14px;
+  cursor: pointer;
+  color: var(--fk-blue);
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  color: #333;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  border-radius: 0 0 4px 4px;
+  z-index: 1001;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 11px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+}
+
+.suggestion-item:hover {
+  background: #f1f3f6;
+  color: var(--fk-blue);
+}
+
+.nav-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  background: white;
+  color: var(--fk-blue);
+  padding: 6px 18px;
+  border-radius: 2px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-size: 13px;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.cart-pill {
+  background: var(--fk-orange);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* =======================================================
+   CATEGORY CIRCLES / STRIP (FLIPKART APP STYLE)
+   ======================================================= */
+.category-strip {
+  background: white;
+  padding: 12px 16px;
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.category-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  min-width: 64px;
+  text-align: center;
+}
+
+.cat-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f1f3f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 6px;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.cat-bubble.active .cat-icon-circle {
+  background: var(--fk-blue);
+  color: white;
+  transform: scale(1.08);
+}
+
+.cat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.cat-bubble.active .cat-label {
+  color: var(--fk-blue);
+  font-weight: 700;
+}
+
+/* =======================================================
+   HERO BANNER
+   ======================================================= */
+.banner-container {
+  max-width: 1300px;
+  margin: 12px auto;
+  padding: 0 12px;
+}
+
+.hero-banner {
+  background: linear-gradient(135deg, #2874f0 0%, #0d47a1 100%);
+  color: white;
+  padding: 18px 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.hero-btn {
+  background: var(--fk-yellow);
+  color: #212121;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 4px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* =======================================================
+   PRODUCT GRID & CARDS (2-COL ON MOBILE, 4-COL ON DESKTOP)
+   ======================================================= */
+.main-wrapper {
+  max-width: 1300px;
+  margin: 12px auto;
+  padding: 0 12px;
+}
+
+.filter-bar {
+  background: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sort-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sort-chip {
+  background: #f1f3f6;
+  border: 1px solid var(--border-color);
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sort-chip.active {
+  background: var(--fk-blue);
+  color: white;
+  border-color: var(--fk-blue);
+}
+
+/* 2-Column Responsive Grid */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-img-wrapper {
+  width: 100%;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+  background: #fff;
+}
+
+.product-image {
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.product-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 4px;
+  cursor: pointer;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 36px;
+}
+
+.badge-assured {
+  background: #e8f4fd;
+  color: var(--fk-blue);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 2px;
+  width: fit-content;
+  margin: 3px 0;
+}
+
+.rating-pill {
+  background: var(--fk-green);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.current-price {
+  font-size: 17px;
+  font-weight: 800;
+  color: #111;
+}
+
+.discount-tag {
+  color: var(--fk-green);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.btn-group {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.btn-add-cart {
+  flex: 1;
+  background: #ff9f00;
+  color: white;
+  border: none;
+  padding: 9px 4px;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-buy-now {
+  flex: 1;
+  background: var(--fk-orange);
+  color: white;
+  border: none;
+  padding: 9px 4px;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* =======================================================
+   FLIPKART MOBILE BOTTOM APP BAR (Fixed at bottom on phones)
+   ======================================================= */
+.bottom-nav {
+  display: none; /* hidden on desktop */
+}
+
+/* =======================================================
+   MODALS & DRAWERS
+   ======================================================= */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 20px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 22px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #666;
+}
+
+/* Slide Drawer */
+.drawer-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer-content {
+  background: white;
+  width: 100%;
+  max-width: 440px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-header {
+  padding: 14px 18px;
+  background: var(--fk-blue);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.drawer-footer {
+  padding: 16px;
+  background: #fafafa;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-checkout {
+  width: 100%;
+  background: var(--fk-orange);
+  color: white;
+  border: none;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* =======================================================
+   MOBILE BREAKPOINT (< 768px)
+   ======================================================= */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 68px; /* space for bottom nav */
+  }
+
+  .header-inner {
+    flex-direction: column;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .header-top-row {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .search-container {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .nav-actions {
+    display: none; /* actions move to mobile header top row or bottom nav */
+  }
+
+  /* 2-Column Product Grid on Mobile Phones */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .product-card {
+    padding: 10px;
+  }
+
+  .card-img-wrapper {
+    height: 130px;
+  }
+
+  .product-image {
+    max-height: 130px;
+  }
+
+  .current-price {
+    font-size: 15px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Fixed Bottom App Bar on Mobile */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+    z-index: 1500;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #444;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .bottom-nav-item.active {
+    color: var(--fk-blue);
+  }
+
+  .bottom-nav-icon {
+    font-size: 20px;
+    margin-bottom: 2px;
+  }
+
+  .mobile-cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    background: #fb641b;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Drawer on Mobile opens full screen */
+  .drawer-content {
+    max-width: 100%;
+  }
+}

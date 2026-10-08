@@ -1,0 +1,277 @@
+services:
+  # ========================================================
+  # DATABASE LAYER (Strictly 2 Databases)
+  # ========================================================
+  flipkart-postgres:
+    image: postgres:16-alpine
+    container_name: flipkart-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${DB_NAME:-flipkart_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./databases/init:/docker-entrypoint-initdb.d
+    networks:
+      - flipkart-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  flipkart-redis:
+    image: redis:7-alpine
+    container_name: flipkart-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - flipkart-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ========================================================
+  # API GATEWAY (Node.js / Express)
+  # ========================================================
+  api-gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: flipkart-api-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./gateway/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+      flipkart-redis:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  # ========================================================
+  # BACKEND MICROSERVICES (Polyglot)
+  # ========================================================
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: flipkart-user-service
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./services/user-service/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  catalog-service:
+    build:
+      context: ./services/catalog-service
+      dockerfile: Dockerfile
+    container_name: flipkart-catalog-service
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./services/catalog-service/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  search-service:
+    build:
+      context: ./services/search-service
+      dockerfile: Dockerfile
+    container_name: flipkart-search-service
+    restart: unless-stopped
+    ports:
+      - "5003:5003"
+    env_file:
+      - ./services/search-service/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  cart-service:
+    build:
+      context: ./services/cart-service
+      dockerfile: Dockerfile
+    container_name: flipkart-cart-service
+    restart: unless-stopped
+    ports:
+      - "5004:5004"
+    env_file:
+      - ./services/cart-service/.env
+    depends_on:
+      flipkart-redis:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: flipkart-order-service
+    restart: unless-stopped
+    ports:
+      - "5005:5005"
+    env_file:
+      - ./services/order-service/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: flipkart-payment-service
+    restart: unless-stopped
+    ports:
+      - "5006:5006"
+    env_file:
+      - ./services/payment-service/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  inventory-service:
+    build:
+      context: ./services/inventory-service
+      dockerfile: Dockerfile
+    container_name: flipkart-inventory-service
+    restart: unless-stopped
+    ports:
+      - "5007:5007"
+    env_file:
+      - ./services/inventory-service/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+      flipkart-redis:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  delivery-service:
+    build:
+      context: ./services/delivery-service
+      dockerfile: Dockerfile
+    container_name: flipkart-delivery-service
+    restart: unless-stopped
+    ports:
+      - "5008:5008"
+    env_file:
+      - ./services/delivery-service/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: flipkart-notification-service
+    restart: unless-stopped
+    env_file:
+      - ./services/notification-service/.env
+    depends_on:
+      flipkart-redis:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  review-service:
+    build:
+      context: ./services/review-service
+      dockerfile: Dockerfile
+    container_name: flipkart-review-service
+    restart: unless-stopped
+    ports:
+      - "5009:5009"
+    env_file:
+      - ./services/review-service/.env
+    depends_on:
+      flipkart-postgres:
+        condition: service_healthy
+    networks:
+      - flipkart-network
+
+  # ========================================================
+  # FRONTEND CLIENT APPLICATIONS (Different Ports, NO .env)
+  # ========================================================
+  web-client:
+    build:
+      context: ./frontend/web-store
+      dockerfile: Dockerfile
+    container_name: flipkart-web-client
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    networks:
+      - flipkart-network
+
+  seller-client:
+    build:
+      context: ./frontend/seller-portal
+      dockerfile: Dockerfile
+    container_name: flipkart-seller-client
+    restart: unless-stopped
+    ports:
+      - "4100:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - flipkart-network
+
+  admin-client:
+    build:
+      context: ./frontend/admin-portal
+      dockerfile: Dockerfile
+    container_name: flipkart-admin-client
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - flipkart-network
+
+networks:
+  flipkart-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

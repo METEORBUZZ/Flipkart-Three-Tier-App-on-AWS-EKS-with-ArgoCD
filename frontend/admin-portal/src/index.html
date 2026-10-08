@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Flipkart SuperAdmin Console (Port 4200)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: #f1f3f6; color: #212121; }
+    .navbar {
+      background: #1e293b; color: white; padding: 12px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px;
+    }
+    .badge-admin { background: #ef4444; color: white; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 3px; }
+    .layout { display: flex; min-height: calc(100vh - 54px); }
+    .sidebar { width: 230px; background: white; border-right: 1px solid #e0e0e0; padding: 16px 0; flex-shrink: 0; }
+    .sidebar a { display: block; padding: 12px 20px; color: #333; text-decoration: none; font-weight: 500; font-size: 13px; }
+    .sidebar a.active, .sidebar a:hover { background: #fee2e2; color: #b91c1c; border-left: 4px solid #ef4444; font-weight: 700; }
+    .main { flex: 1; padding: 20px; max-width: 100%; overflow-x: hidden; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-card { background: white; padding: 18px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .stat-num { font-size: 24px; font-weight: 800; color: #1e293b; margin-top: 6px; }
+    .card { background: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #fafafa; color: #666; font-weight: 600; }
+    .badge-ok { background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; }
+      .sidebar {
+        width: 100%; display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch;
+        padding: 8px 12px; gap: 8px; border-bottom: 1px solid #e0e0e0;
+      }
+      .sidebar::-webkit-scrollbar { display: none; }
+      .sidebar a {
+        padding: 6px 14px; border-radius: 16px; background: #f1f3f6; font-size: 12px; white-space: nowrap;
+      }
+      .sidebar a.active {
+        background: #ef4444; color: white; border: none;
+      }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .main { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div style="font-size: 18px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 8px;">
+      Flipkart <span class="badge-admin">ADMIN CONSOLE</span>
+    </div>
+    <div style="display: flex; gap: 10px; font-size: 12px; align-items: center;">
+      <a href="http://10.195.18.98:3000" target="_blank" style="color: white; text-decoration: none; font-weight: 600;">🛍️ Buyer (3000)</a>
+      <a href="http://10.195.18.98:4100" target="_blank" style="color: white; text-decoration: none; font-weight: 600;">🏪 Seller (4100)</a>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <a href="#services-table" class="active">🛡️ System Ops</a>
+      <a href="#services-table">📡 Microservices</a>
+      <a href="#orders-table">📑 Live Orders Feed</a>
+    </div>
+
+    <div class="main">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div style="font-size: 12px; color: #666;">Catalog Products</div>
+          <div class="stat-num" id="admin-prod-count">6</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size: 12px; color: #666;">Microservices</div>
+          <div class="stat-num" style="color: #15803d;">9 / 9 Online</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size: 12px; color: #666;">Databases</div>
+          <div class="stat-num">PostgreSQL + Redis</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size: 12px; color: #666;">Gateway Status</div>
+          <div class="stat-num" style="color: #15803d; font-size: 18px;">Port 8000 (OK)</div>
+        </div>
+      </div>
+
+      <!-- Live Microservices Health Card -->
+      <div class="card" id="services-table">
+        <h3 style="margin-bottom: 14px; font-size: 16px;">Microservices Health Monitor (API Gateway)</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Service Name</th>
+                <th>Language / Runtime</th>
+                <th>Framework</th>
+                <th>Storage</th>
+                <th>Health Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>catalog-service</strong></td>
+                <td>Node.js 20</td>
+                <td>Express.js</td>
+                <td>PostgreSQL (JSONB)</td>
+                <td><span class="badge-ok">● HEALTHY</span></td>
+              </tr>
+              <tr>
+                <td><strong>cart-service</strong></td>
+                <td>Node.js 20</td>
+                <td>Express.js</td>
+                <td>Redis (In-Memory)</td>
+                <td><span class="badge-ok">● HEALTHY</span></td>
+              </tr>
+              <tr>
+                <td><strong>search-service</strong></td>
+                <td>Python 3.11</td>
+                <td>Flask</td>
+                <td>PostgreSQL (pg_trgm)</td>
+                <td><span class="badge-ok">● HEALTHY</span></td>
+              </tr>
+              <tr>
+                <td><strong>inventory-service</strong></td>
+                <td>Python 3.11</td>
+                <td>FastAPI</td>
+                <td>PostgreSQL + Redis</td>
+                <td><span class="badge-ok">● HEALTHY</span></td>
+              </tr>
+              <tr>
+                <td><strong>delivery-service (Ekart)</strong></td>
+                <td>Python 3.11</td>
+                <td>Flask</td>
+                <td>PostgreSQL</td>
+                <td><span class="badge-ok">● HEALTHY</span></td>
+              </tr>
+              <tr>
+                <td><strong>payment-service</strong></td>
+                <td>Go 1.22</td>
+                <td>Gin</td>
+                <td>PostgreSQL</td>
+                <td><span class="badge-ok">● HEALTHY</span></td>
+              </tr>
+              <tr>
+                <td><strong>review-service</strong></td>
+                <td>Python 3.11</td>
+                <td>FastAPI</td>
+                <td>PostgreSQL</td>
+                <td><span class="badge-ok">● HEALTHY</span></td>
+              </tr>
+              <tr>
+                <td><strong>notification-service</strong></td>
+                <td>Node.js 20</td>
+                <td>Worker</td>
+                <td>Redis Pub/Sub</td>
+                <td><span class="badge-ok">● LISTENING</span></td>
+              </tr>
+              <tr>
+                <td><strong>user-service</strong></td>
+                <td>Python 3.11</td>
+                <td>Django REST</td>
+                <td>PostgreSQL</td>
+                <td><span class="badge-ok">● HEALTHY</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Orders Feed -->
+      <div class="card" id="orders-table">
+        <h3 style="margin-bottom: 14px; font-size: 16px;">Recent Orders</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Partner</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>#ORD-999</strong></td>
+                <td>Rahul Sharma</td>
+                <td>₹71,999</td>
+                <td>Ekart Logistics</td>
+                <td><span class="badge-ok">CONFIRMED</span></td>
+              </tr>
+              <tr>
+                <td><strong>#ORD-1002</strong></td>
+                <td>Priya Nair</td>
+                <td>₹29,990</td>
+                <td>Ekart Logistics</td>
+                <td><span class="badge-ok">IN TRANSIT</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function refreshAdmin() {
+      try {
+        const res = await fetch('/api/v1/catalog/products');
+        if (res.ok) {
+          const list = await res.json();
+          document.getElementById('admin-prod-count').innerText = list.length;
+        }
+      } catch (e) {}
+    }
+    refreshAdmin();
+  </script>
+</body>
+</html>
