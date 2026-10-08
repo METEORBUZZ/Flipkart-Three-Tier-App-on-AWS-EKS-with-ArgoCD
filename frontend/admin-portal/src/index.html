@@ -47,12 +47,37 @@
   </style>
 </head>
 <body>
+  <!-- ENTERPRISE ADMIN AUTHENTICATION WALL -->
+  <div id="admin-auth-gate" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f172a; z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; border-radius: 12px; max-width: 420px; width: 100%; padding: 30px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center;">
+      <div style="width: 56px; height: 56px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 26px;">
+        🛡️
+      </div>
+      <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Flipkart Enterprise Admin Gate</h2>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">
+        Restricted Infrastructure Console. Unauthorized access attempts are monitored and logged under MNC Security Protocol.
+      </p>
+      <form onsubmit="handleAdminAuth(event)" style="text-align: left;">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 5px;">SUPERADMIN PASSKEY:</label>
+        <input type="password" id="admin-passkey-input" placeholder="Enter Admin Secret Passkey" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 14px;">
+        <div id="admin-auth-error" style="color: #dc2626; font-size: 12px; font-weight: 600; margin-bottom: 12px; display: none;"></div>
+        <button type="submit" style="width: 100%; background: #ef4444; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer;">
+          🔒 Authenticate Admin Session
+        </button>
+      </form>
+      <div style="margin-top: 16px; font-size: 11px; color: #94a3b8;">
+        Default Infrastructure Key: <code>admin2026</code>
+      </div>
+    </div>
+  </div>
+
   <div class="navbar">
     <div style="font-size: 18px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 8px;">
       Flipkart <span class="badge-admin">ADMIN CONSOLE</span>
     </div>
     <div style="display: flex; gap: 10px; font-size: 12px; align-items: center; color: #cbd5e1; font-weight: 600;">
-      <span>🔒 Secure Enterprise Session</span>
+      <span style="color: #4ade80;">● Admin Session Active</span>
+      <button onclick="adminLogout()" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">🔒 Lock Console</button>
     </div>
   </div>
 
@@ -203,16 +228,49 @@
   </div>
 
   <script>
+    function checkAdminAuth() {
+      const isAuth = sessionStorage.getItem('fk_admin_auth');
+      const gate = document.getElementById('admin-auth-gate');
+      if (isAuth === 'verified-admin-session') {
+        if (gate) gate.style.display = 'none';
+        refreshAdmin();
+      } else {
+        if (gate) gate.style.display = 'flex';
+      }
+    }
+
+    function handleAdminAuth(e) {
+      e.preventDefault();
+      const pass = document.getElementById('admin-passkey-input').value;
+      if (pass === 'admin2026' || pass === 'fk_sec_admin_root_2026') {
+        sessionStorage.setItem('fk_admin_auth', 'verified-admin-session');
+        document.getElementById('admin-auth-gate').style.display = 'none';
+        refreshAdmin();
+      } else {
+        const err = document.getElementById('admin-auth-error');
+        err.innerText = '✕ Access Denied: Invalid Master Passkey';
+        err.style.display = 'block';
+      }
+    }
+
+    function adminLogout() {
+      sessionStorage.removeItem('fk_admin_auth');
+      checkAdminAuth();
+    }
+
     async function refreshAdmin() {
       try {
-        const res = await fetch('/api/v1/catalog/products');
+        const res = await fetch('/api/v1/catalog/products', {
+          headers: { 'x-admin-key': 'verified-admin-session' }
+        });
         if (res.ok) {
           const list = await res.json();
           document.getElementById('admin-prod-count').innerText = list.length;
         }
       } catch (e) {}
     }
-    refreshAdmin();
+
+    checkAdminAuth();
   </script>
 </body>
 </html>

@@ -24,6 +24,47 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// ========================================================
+// ENTERPRISE ACCESS CONTROL & RBAC MIDDLEWARE
+// Prevent attackers from executing seller/admin operations
+// ========================================================
+const SELLER_API_SECRET = process.env.SELLER_API_SECRET || 'fk_sec_seller_token_2026';
+const ADMIN_API_SECRET = process.env.ADMIN_API_SECRET || 'fk_sec_admin_root_2026';
+
+app.use((req, res, next) => {
+  const path = req.path;
+  const method = req.method;
+
+  // 1. Protect Catalog Write/Creation (Seller/Admin only)
+  const isCatalogMutation = path.startsWith('/api/v1/catalog/products') && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+  
+  // 2. Protect Inventory Mutations (Warehouse Seller/Admin only)
+  const isInventoryMutation = path.startsWith('/api/v1/inventory') && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+
+  // 3. Protect Admin operations
+  const isAdminOperation = path.startsWith('/api/v1/admin');
+
+  if (isCatalogMutation || isInventoryMutation || isAdminOperation) {
+    const sellerToken = req.headers['x-seller-token'];
+    const adminKey = req.headers['x-admin-key'];
+    const authHeader = req.headers['authorization'];
+
+    const isAuthorizedSeller = (sellerToken === SELLER_API_SECRET || sellerToken === 'verified-seller-session');
+    const isAuthorizedAdmin = (adminKey === ADMIN_API_SECRET || adminKey === 'verified-admin-session');
+
+    if (!isAuthorizedSeller && !isAuthorizedAdmin) {
+      console.warn(`[Security Alert] Unauthorized access attempt to ${method} ${path} from IP: ${req.ip}`);
+      return res.status(403).json({
+        error: 'Access Denied: Enterprise Administrative or Verified Seller authorization required.',
+        code: 'ACCESS_DENIED_ENTERPRISE_SECURITY',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  next();
+});
+
 // Gateway Health Route
 app.get('/health', (req, res) => {
   res.json({

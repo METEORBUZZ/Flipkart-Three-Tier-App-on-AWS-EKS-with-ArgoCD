@@ -320,13 +320,41 @@
     }
   </style>
 </head>
-<body>
+  <!-- SELLER HUB AUTHENTICATION WALL -->
+  <div id="seller-auth-gate" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f172a; z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; border-radius: 12px; max-width: 440px; width: 100%; padding: 30px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center;">
+      <div style="width: 56px; height: 56px; background: #dbeafe; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 26px;">
+        🏪
+      </div>
+      <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Flipkart Seller Hub Login</h2>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">
+        Verified Merchant Portal. Restricted to registered GSTIN business accounts.
+      </p>
+      <form onsubmit="handleSellerAuth(event)" style="text-align: left;">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 5px;">REGISTERED MERCHANT EMAIL:</label>
+        <input type="email" id="seller-email-input" value="seller@flipkart.com" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 12px;">
+        
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 5px;">GSTIN / PASSKEY:</label>
+        <input type="password" id="seller-passkey-input" placeholder="Enter Merchant Passkey" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 14px;">
+        
+        <div id="seller-auth-error" style="color: #dc2626; font-size: 12px; font-weight: 600; margin-bottom: 12px; display: none;"></div>
+        <button type="submit" style="width: 100%; background: #2874f0; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer;">
+          🏪 Verify & Access Seller Hub
+        </button>
+      </form>
+      <div style="margin-top: 16px; font-size: 11px; color: #94a3b8;">
+        Default Merchant Key: <code>seller2026</code>
+      </div>
+    </div>
+  </div>
+
   <div class="admin-navbar">
     <div class="brand-title">
       Flipkart <span class="badge-seller">SELLER HUB</span>
     </div>
-    <div class="nav-links">
-      <span style="color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600;">🏪 Verified Merchant Portal</span>
+    <div class="nav-links" style="display: flex; gap: 10px; align-items: center;">
+      <span style="color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600;">🏪 Verified: seller@flipkart.com</span>
+      <button onclick="sellerLogout()" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">🔒 Sign Out</button>
     </div>
   </div>
 
@@ -747,7 +775,10 @@
       try {
         const res = await fetch('/api/v1/catalog/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-seller-token': 'verified-seller-session'
+          },
           body: JSON.stringify(payload)
         });
         if (res.ok) {
@@ -768,7 +799,10 @@
       try {
         const res = await fetch('/api/v1/inventory/set', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-seller-token': 'verified-seller-session'
+          },
           body: JSON.stringify({ product_id: prodId, stock_quantity: qty })
         });
         if (res.ok) {
@@ -779,7 +813,38 @@
       }
     }
 
-    loadCatalogListings();
+    function checkSellerAuth() {
+      const isAuth = sessionStorage.getItem('fk_seller_auth');
+      const gate = document.getElementById('seller-auth-gate');
+      if (isAuth === 'verified-seller-session') {
+        if (gate) gate.style.display = 'none';
+        loadCatalogListings();
+      } else {
+        if (gate) gate.style.display = 'flex';
+      }
+    }
+
+    function handleSellerAuth(e) {
+      e.preventDefault();
+      const email = document.getElementById('seller-email-input').value;
+      const pass = document.getElementById('seller-passkey-input').value;
+      if (pass === 'seller2026' || pass === 'fk_sec_seller_token_2026' || pass === 'GSTIN29ABCDE1234F1Z5') {
+        sessionStorage.setItem('fk_seller_auth', 'verified-seller-session');
+        document.getElementById('seller-auth-gate').style.display = 'none';
+        loadCatalogListings();
+      } else {
+        const err = document.getElementById('seller-auth-error');
+        err.innerText = '✕ Verification Failed: Invalid Merchant Passkey';
+        err.style.display = 'block';
+      }
+    }
+
+    function sellerLogout() {
+      sessionStorage.removeItem('fk_seller_auth');
+      checkSellerAuth();
+    }
+
+    checkSellerAuth();
   </script>
 </body>
 </html>

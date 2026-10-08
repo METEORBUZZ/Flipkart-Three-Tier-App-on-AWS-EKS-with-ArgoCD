@@ -775,18 +775,6 @@ export default function Home({ initialProducts }) {
                 </button>
               )}
 
-              <div
-                className="desktop-nav-link"
-                onClick={() => alert('Flipkart Seller Network: Merchant onboarding is available for verified sellers.')}
-                title="Become a Seller"
-              >
-                🏪 Become a Seller
-              </div>
-
-              <div className="desktop-nav-link" onClick={() => setShowOrdersModal(true)}>
-                📦 Orders ({userOrders.length})
-              </div>
-
               <div className="desktop-cart-pill" onClick={() => setShowCartDrawer(true)}>
                 🛒 Cart ({cartCount})
               </div>
