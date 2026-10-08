@@ -355,11 +355,17 @@
             <span onclick="switchSellerStepPhone()" style="font-size: 11px; color: #2874f0; font-weight: 700; cursor: pointer;">Change Number</span>
           </div>
           <div id="seller-otp-sent-label" style="font-size: 12px; color: #64748b; margin-bottom: 12px;"></div>
+          <div id="seller-otp-attempt-banner" style="display: none; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-bottom: 10px;"></div>
           <input type="text" id="seller-otp-input" maxlength="6" placeholder="••••••" required style="width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 18px; text-align: center; letter-spacing: 8px; font-weight: 800; outline: none; margin-bottom: 14px;">
 
-          <button type="submit" id="btn-seller-verify-otp" style="width: 100%; background: #2874f0; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer;">
+          <button type="submit" id="btn-seller-verify-otp" style="width: 100%; background: #2874f0; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer; margin-bottom: 10px;">
             🏪 VERIFY OTP & ENTER WORKSPACE
           </button>
+          <div style="text-align: center;">
+            <button type="button" id="btn-seller-resend-otp" onclick="handleSellerResendOtp()" style="background: none; border: none; color: #2874f0; font-size: 12px; font-weight: 700; cursor: pointer;">
+              Resend OTP
+            </button>
+          </div>
         </form>
       </div>
 
@@ -900,6 +906,43 @@
       }
     }
 
+    let sellerResendCooldown = 0;
+    let sellerCooldownTimer = null;
+    let sellerAttemptsRemaining = 3;
+    let isSellerOtpLocked = false;
+
+    function startSellerCooldown(seconds) {
+      sellerResendCooldown = seconds;
+      const resendBtn = document.getElementById('btn-seller-resend-otp');
+      if (sellerCooldownTimer) clearInterval(sellerCooldownTimer);
+      if (resendBtn) {
+        resendBtn.disabled = true;
+        resendBtn.style.color = '#94a3b8';
+        resendBtn.style.cursor = 'not-allowed';
+        resendBtn.innerText = `Resend OTP in ${sellerResendCooldown}s`;
+      }
+      sellerCooldownTimer = setInterval(() => {
+        sellerResendCooldown--;
+        if (sellerResendCooldown <= 0) {
+          clearInterval(sellerCooldownTimer);
+          sellerCooldownTimer = null;
+          if (resendBtn) {
+            resendBtn.disabled = false;
+            resendBtn.style.color = '#2874f0';
+            resendBtn.style.cursor = 'pointer';
+            resendBtn.innerText = 'Resend OTP';
+          }
+        } else if (resendBtn) {
+          resendBtn.innerText = `Resend OTP in ${sellerResendCooldown}s`;
+        }
+      }, 1000);
+    }
+
+    function handleSellerResendOtp() {
+      if (sellerResendCooldown > 0) return;
+      handleSellerSendOtp();
+    }
+
     async function handleSellerSendOtp(e) {
       if (e) e.preventDefault();
       const phoneInput = document.getElementById('seller-phone-input');
@@ -907,8 +950,8 @@
       const errBox = document.getElementById('seller-auth-error');
       errBox.style.display = 'none';
 
-      if (cleanPhone.length < 10) {
-        errBox.innerText = '✕ Please enter a valid 10-digit mobile number';
+      if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+        errBox.innerText = '✕ Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.';
         errBox.style.display = 'block';
         return;
       }
@@ -916,18 +959,41 @@
       activeSellerPhone = cleanPhone;
       const sendBtn = document.getElementById('btn-seller-send-otp');
       sendBtn.innerText = 'SENDING OTP...';
+      sendBtn.disabled = true;
 
       try {
-        const res = await fetch('/api/v1/users/otp/send', {
+        const res = await fetch('/api/auth/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: cleanPhone, role: 'SELLER' })
+          body: JSON.stringify({ phone_number: cleanPhone, phone: cleanPhone, role: 'SELLER' })
         });
         const data = await res.json();
         
-        if (res.ok) {
+        if (res.ok && data.status === 'success') {
+          sellerAttemptsRemaining = 3;
+          isSellerOtpLocked = false;
+          const attemptBanner = document.getElementById('seller-otp-attempt-banner');
+          if (attemptBanner) attemptBanner.style.display = 'none';
+
+          const otpInput = document.getElementById('seller-otp-input');
+          if (otpInput) {
+            otpInput.disabled = false;
+            otpInput.value = '';
+            otpInput.style.background = 'white';
+            otpInput.style.border = '1px solid #cbd5e1';
+          }
+          const verifyBtn = document.getElementById('btn-seller-verify-otp');
+          if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.style.background = '#2874f0';
+            verifyBtn.style.cursor = 'pointer';
+            verifyBtn.innerText = '🏪 VERIFY OTP & ENTER WORKSPACE';
+          }
+
           document.getElementById('seller-step-phone').style.display = 'none';
           document.getElementById('seller-step-otp').style.display = 'block';
+          startSellerCooldown(data.cooldown_seconds || 60);
+
           const smsProtocolUri = data.sms?.protocol_uri || `sms:+91${cleanPhone}?&body=${encodeURIComponent(data.sms?.message || '')}`;
           document.getElementById('seller-otp-sent-label').innerHTML = `
             <div style="font-size: 12px; color: #475569; margin-bottom: 6px;">
@@ -954,7 +1020,10 @@
             renderSellerSmsBanner(data.sms);
           }
         } else {
-          errBox.innerText = '✕ ' + (data.error || 'Failed to send OTP');
+          if (res.status === 429) {
+            startSellerCooldown(data.retry_after || 60);
+          }
+          errBox.innerText = '✕ ' + (data.error || data.message || 'Failed to send OTP');
           errBox.style.display = 'block';
         }
       } catch (err) {
@@ -962,33 +1031,39 @@
         errBox.style.display = 'block';
       } finally {
         sendBtn.innerText = '📲 REQUEST SELLER OTP';
+        sendBtn.disabled = false;
       }
     }
 
     async function handleSellerVerifyOtp(e) {
       if (e) e.preventDefault();
+      if (isSellerOtpLocked) {
+        return;
+      }
       const otp = document.getElementById('seller-otp-input').value.trim();
       const errBox = document.getElementById('seller-auth-error');
+      const attemptBanner = document.getElementById('seller-otp-attempt-banner');
       errBox.style.display = 'none';
 
-      if (otp.length < 4) {
-        errBox.innerText = '✕ Please enter the 6-digit OTP';
+      if (otp.length !== 6) {
+        errBox.innerText = '✕ Please enter the 6-digit OTP code received via SMS';
         errBox.style.display = 'block';
         return;
       }
 
       const verifyBtn = document.getElementById('btn-seller-verify-otp');
       verifyBtn.innerText = 'VERIFYING...';
+      verifyBtn.disabled = true;
 
       try {
-        const res = await fetch('/api/v1/users/otp/verify', {
+        const res = await fetch('/api/auth/verify-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: activeSellerPhone, otp: otp, role: 'SELLER' })
+          body: JSON.stringify({ phone_number: activeSellerPhone, phone: activeSellerPhone, otp_code: otp, otp: otp, role: 'SELLER' })
         });
         const data = await res.json();
 
-        if (res.ok) {
+        if (res.ok && data.user) {
           sessionStorage.setItem('fk_seller_auth', 'verified-seller-session');
           sessionStorage.setItem('fk_seller_phone', activeSellerPhone);
           sessionStorage.setItem('fk_seller_user', JSON.stringify(data.user || {}));
@@ -996,16 +1071,48 @@
           document.getElementById('seller-nav-badge').innerText = `🏪 Verified Seller: +91 ${activeSellerPhone}`;
           loadCatalogListings();
         } else {
-          errBox.innerText = '✕ ' + (data.error || 'Invalid or expired OTP. Please try again.');
+          if (data?.attempts_remaining !== undefined) {
+            sellerAttemptsRemaining = data.attempts_remaining;
+            if (data.attempts_remaining === 0) {
+              isSellerOtpLocked = true;
+              if (attemptBanner) {
+                attemptBanner.style.display = 'block';
+                attemptBanner.style.background = '#fef2f2';
+                attemptBanner.style.border = '1px solid #f87171';
+                attemptBanner.style.color = '#b91c1c';
+                attemptBanner.innerText = '🔒 Maximum attempts exceeded (3/3). This OTP has been invalidated. Please request a new OTP.';
+              }
+              const otpInput = document.getElementById('seller-otp-input');
+              if (otpInput) {
+                otpInput.disabled = true;
+                otpInput.style.background = '#fef2f2';
+                otpInput.style.border = '1px solid #fca5a5';
+              }
+              verifyBtn.disabled = true;
+              verifyBtn.style.background = '#94a3b8';
+              verifyBtn.style.cursor = 'not-allowed';
+              verifyBtn.innerText = 'OTP LOCKED';
+              return;
+            } else if (attemptBanner) {
+              attemptBanner.style.display = 'block';
+              attemptBanner.style.background = '#fffbeb';
+              attemptBanner.style.border = '1px solid #fde68a';
+              attemptBanner.style.color = '#b45309';
+              attemptBanner.innerText = `⚠️ Invalid OTP. ${3 - sellerAttemptsRemaining} of 3 attempts used (${sellerAttemptsRemaining} remaining).`;
+            }
+          }
+          errBox.innerText = '✕ ' + (data.error || 'Invalid OTP. Please try again.');
           errBox.style.display = 'block';
         }
       } catch (err) {
         errBox.innerText = '✕ Verification failed. Please check network connection.';
         errBox.style.display = 'block';
       } finally {
-        verifyBtn.innerText = '🏪 VERIFY OTP & ENTER WORKSPACE';
+        if (!isSellerOtpLocked) {
+          verifyBtn.innerText = '🏪 VERIFY OTP & ENTER WORKSPACE';
+          verifyBtn.disabled = false;
+        }
       }
-    }
     }
 
     function sellerLogout() {

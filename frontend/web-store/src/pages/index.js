@@ -155,6 +155,20 @@ export default function Home({ initialProducts }) {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [attemptsRemaining, setAttemptsRemaining] = useState(3);
+  const [isOtpLocked, setIsOtpLocked] = useState(false);
+
+  // 60-Second Anti-Fraud Resend Cooldown Countdown
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   // Cart State (Redis backend)
   const [cartItems, setCartItems] = useState([]);
@@ -624,29 +638,36 @@ export default function Home({ initialProducts }) {
       e.preventDefault();
       e.stopPropagation();
     }
+    if (resendCooldown > 0) return;
     setAuthError('');
     const cleanPhone = (authPhone || '').replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
-      setAuthError('Please enter a valid 10-digit mobile number');
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setAuthError('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
       return;
     }
     setIsSendingOtp(true);
     try {
-      const res = await fetch('/api/v1/users/otp/send', {
+      const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, role: 'CUSTOMER' })
+        body: JSON.stringify({ phone_number: cleanPhone, phone: cleanPhone, role: 'CUSTOMER' })
       });
       const data = await res.json();
       if (res.ok && data.status === 'success') {
         setOtpSent(true);
+        setIsOtpLocked(false);
+        setAttemptsRemaining(3);
+        setResendCooldown(data.cooldown_seconds || 60);
         setActiveRefId(data.ref_id || `FK-${Date.now().toString().slice(-6)}`);
         if (data.sms) {
           setIncomingSms(data.sms);
           setTimeout(() => setIncomingSms(null), 15000);
         }
-        showToast(`✓ OTP sent via SMS to +91 ${cleanPhone}`);
+        showToast(`✓ OTP sent via SMS protocol to +91 ${cleanPhone}`);
       } else {
+        if (res.status === 429) {
+          setResendCooldown(data.retry_after || 60);
+        }
         setAuthError(data?.error || data?.message || 'Failed to send OTP. Please try again.');
       }
     } catch (err) {
@@ -662,25 +683,29 @@ export default function Home({ initialProducts }) {
       e.preventDefault();
       e.stopPropagation();
     }
+    if (isOtpLocked) {
+      setAuthError('This OTP has been locked due to 3 failed attempts. Please request a new OTP.');
+      return;
+    }
     setAuthError('');
-    if (!authOtp || authOtp.trim().length < 4) {
-      setAuthError('Please enter the 6-digit OTP received via SMS');
+    if (!authOtp || authOtp.trim().length !== 6) {
+      setAuthError('Please enter the 6-digit OTP code received via SMS');
       return;
     }
     setIsVerifyingOtp(true);
     const cleanPhone = (authPhone || '').replace(/\D/g, '');
     try {
-      const res = await fetch('/api/v1/users/otp/verify', {
+      const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, otp: authOtp.trim(), role: 'CUSTOMER' })
+        body: JSON.stringify({ phone_number: cleanPhone, phone: cleanPhone, otp_code: authOtp.trim(), otp: authOtp.trim(), role: 'CUSTOMER' })
       });
       const data = await res.json();
       if (res.ok && data.user) {
         const loggedUser = {
           id: data.user.id,
           username: data.user.username,
-          phone: data.user.phone,
+          phone: data.user.phone || data.user.phone_number,
           superCoins: data.user.super_coins || 150
         };
         setUser(loggedUser);
@@ -688,8 +713,16 @@ export default function Home({ initialProducts }) {
         setShowAuthModal(false);
         setOtpSent(false);
         setAuthOtp('');
+        setAttemptsRemaining(3);
+        setIsOtpLocked(false);
         showToast(`✓ Welcome to Flipkart, ${loggedUser.username}!`);
       } else {
+        if (data?.attempts_remaining !== undefined) {
+          setAttemptsRemaining(data.attempts_remaining);
+          if (data.attempts_remaining === 0) {
+            setIsOtpLocked(true);
+          }
+        }
         setAuthError(data?.error || 'Invalid OTP. Please enter the valid OTP received via SMS.');
       }
     } catch (err) {
@@ -2515,13 +2548,25 @@ export default function Home({ initialProducts }) {
                           <strong style={{ letterSpacing: 0.5 }}>#{activeRefId}</strong>
                         </div>
                       )}
+                      {/* Anti-fraud attempt tracking & locked status banner */}
+                      {isOtpLocked ? (
+                        <div style={{ background: '#fef2f2', border: '1px solid #f87171', color: '#b91c1c', padding: '8px 10px', borderRadius: 6, fontSize: 12, marginBottom: 10, fontWeight: 700 }}>
+                          🔒 Maximum attempts exceeded (3/3). This OTP has been invalidated. Please request a new OTP below.
+                        </div>
+                      ) : attemptsRemaining < 3 ? (
+                        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#b45309', padding: '8px 10px', borderRadius: 6, fontSize: 12, marginBottom: 10, fontWeight: 700 }}>
+                          ⚠️ Invalid OTP. {3 - attemptsRemaining} of 3 attempts used ({attemptsRemaining} {attemptsRemaining === 1 ? 'attempt' : 'attempts'} remaining).
+                        </div>
+                      ) : null}
+
                       <input
                         type="text"
                         maxLength="6"
                         placeholder="••••••"
                         value={authOtp}
                         onChange={(e) => setAuthOtp(e.target.value)}
-                        style={{ width: '100%', padding: '11px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 18, textAlign: 'center', letterSpacing: 8, fontWeight: 800, outline: 'none', marginBottom: 10 }}
+                        disabled={isOtpLocked}
+                        style={{ width: '100%', padding: '11px', border: isOtpLocked ? '1px solid #fca5a5' : '1px solid #cbd5e1', background: isOtpLocked ? '#fef2f2' : 'white', borderRadius: 6, fontSize: 18, textAlign: 'center', letterSpacing: 8, fontWeight: 800, outline: 'none', marginBottom: 10 }}
                         required
                         autoFocus
                       />
@@ -2535,7 +2580,7 @@ export default function Home({ initialProducts }) {
                         >
                           <span>💬</span> <span>Open in Messages App</span>
                         </a>
-                        {incomingSms?.otp && (
+                        {incomingSms?.otp && !isOtpLocked && (
                           <button
                             type="button"
                             onClick={() => {
@@ -2552,20 +2597,21 @@ export default function Home({ initialProducts }) {
 
                     <button
                       type="submit"
-                      disabled={isVerifyingOtp}
+                      disabled={isVerifyingOtp || isOtpLocked}
                       onClick={handleVerifyOtp}
-                      style={{ width: '100%', background: '#fb641b', color: 'white', border: 'none', padding: 12, borderRadius: 6, fontWeight: 800, fontSize: 14, cursor: 'pointer', marginBottom: 10 }}
+                      style={{ width: '100%', background: isOtpLocked ? '#94a3b8' : '#fb641b', color: 'white', border: 'none', padding: 12, borderRadius: 6, fontWeight: 800, fontSize: 14, cursor: isOtpLocked ? 'not-allowed' : 'pointer', marginBottom: 10 }}
                     >
-                      {isVerifyingOtp ? 'VERIFYING...' : 'VERIFY OTP & LOGIN'}
+                      {isVerifyingOtp ? 'VERIFYING...' : isOtpLocked ? 'OTP LOCKED' : 'VERIFY OTP & LOGIN'}
                     </button>
 
                     <div style={{ textAlign: 'center' }}>
                       <button
                         type="button"
+                        disabled={resendCooldown > 0}
                         onClick={handleSendOtp}
-                        style={{ background: 'none', border: 'none', color: '#2874f0', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', color: resendCooldown > 0 ? '#94a3b8' : '#2874f0', fontSize: 12, fontWeight: 700, cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer' }}
                       >
-                        Resend OTP
+                        {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
                       </button>
                     </div>
                   </form>

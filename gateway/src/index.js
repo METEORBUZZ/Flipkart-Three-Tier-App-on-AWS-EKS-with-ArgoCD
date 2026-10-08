@@ -103,6 +103,7 @@ const routeProxy = (prefix, targetUrl) => {
 };
 
 // Microservice Route Mappings
+routeProxy('/api/auth', process.env.USER_SERVICE_URL || 'http://user-service:5001');
 routeProxy('/api/v1/users', process.env.USER_SERVICE_URL || 'http://user-service:5001');
 routeProxy('/api/v1/catalog', process.env.CATALOG_SERVICE_URL || 'http://catalog-service:5002');
 routeProxy('/api/v1/search', process.env.SEARCH_SERVICE_URL || 'http://search-service:5003');
