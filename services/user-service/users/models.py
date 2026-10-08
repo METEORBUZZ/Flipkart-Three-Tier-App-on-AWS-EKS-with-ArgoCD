@@ -36,3 +36,22 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.full_name} - {self.pincode}"
+
+class OTPRequest(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    phone_number = models.CharField(max_length=20, db_index=True)
+    otp_code = models.CharField(max_length=10)
+    ref_id = models.CharField(max_length=32, blank=True, null=True, db_index=True)
+    role = models.CharField(max_length=20, default='CUSTOMER')
+    ip_address = models.CharField(max_length=50, blank=True, null=True, db_index=True)
+    failed_attempts = models.IntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        db_table = 'otp_requests'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.phone_number} - {self.otp_code} (Expires: {self.expires_at})"
