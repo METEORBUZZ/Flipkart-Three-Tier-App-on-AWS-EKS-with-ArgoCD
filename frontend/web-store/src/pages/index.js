@@ -130,12 +130,8 @@ export default function Home({ initialProducts }) {
   const [activeBrandPill, setActiveBrandPill] = useState('flipkart');
   const [sortOption, setSortOption] = useState('relevance');
 
-  // Device Mode View: 'auto' | 'desktop' | 'mobile_sim'
-  const [deviceMode, setDeviceMode] = useState('auto');
-  const [isScreenDesktop, setIsScreenDesktop] = useState(true);
-
-  // Main Bottom Nav Active View (For Mobile App): 'home' | 'play' | 'categories' | 'account'
-  const [appView, setAppView] = useState('home');
+  // Mobile App Active View: 'home' | 'play' | 'categories' | 'account'
+  const [mobileAppView, setMobileAppView] = useState('home');
 
   // Play Reels Likes State
   const [reelLikes, setReelLikes] = useState({ 'reel-1': 1240, 'reel-2': 890, 'reel-3': 2150 });
@@ -199,16 +195,6 @@ export default function Home({ initialProducts }) {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
   };
-
-  // Window resize listener to detect mobile vs laptop
-  useEffect(() => {
-    const handleResize = () => {
-      setIsScreenDesktop(window.innerWidth >= 768);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Countdown timer effect
   useEffect(() => {
@@ -307,7 +293,7 @@ export default function Home({ initialProducts }) {
   const executeSearch = async (term) => {
     const query = term !== undefined ? term : searchQuery;
     setShowSuggestions(false);
-    setAppView('home');
+    setMobileAppView('home');
     if (!query.trim()) {
       setFilteredProducts(products);
       return;
@@ -329,7 +315,7 @@ export default function Home({ initialProducts }) {
 
   const switchPurpleTab = (tabId) => {
     setActiveTab(tabId);
-    setAppView('home');
+    setMobileAppView('home');
     if (tabId === 'foryou' || tabId === 'fashion' || tabId === 'top_offers') {
       setFilteredProducts(products);
     } else if (tabId === 'mobiles') {
@@ -697,57 +683,12 @@ export default function Home({ initialProducts }) {
 
   const pad2 = (n) => String(n).padStart(2, '0');
 
-  // Determine whether to render Desktop UI or Mobile UI
-  const isDesktopMode = deviceMode === 'desktop' || (deviceMode === 'auto' && isScreenDesktop);
-  const isPhoneSimulation = deviceMode === 'mobile_sim';
-
   return (
     <div style={{ minHeight: '100vh', background: '#f1f2f4' }}>
       <Head>
         <title>Flipkart Online Shopping App | Mobiles, Fashion, Electronics</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </Head>
-
-      {/* =======================================================
-          TOP RESPONSIVE DEVICE MODE SWITCHER
-          Allows user to test Laptop/Desktop vs Phone modes
-          ======================================================= */}
-      <div className="device-mode-bar">
-        <div className="device-switcher-group">
-          <span>View Mode:</span>
-          <button
-            className={`device-btn ${deviceMode === 'auto' ? 'active' : ''}`}
-            onClick={() => setDeviceMode('auto')}
-            title="Auto adapt to your screen size"
-          >
-            🔄 Auto ({isScreenDesktop ? 'Laptop' : 'Mobile'})
-          </button>
-          <button
-            className={`device-btn ${deviceMode === 'desktop' ? 'active' : ''}`}
-            onClick={() => setDeviceMode('desktop')}
-            title="Force Flipkart Desktop Website layout"
-          >
-            💻 Laptop / Desktop
-          </button>
-          <button
-            className={`device-btn ${deviceMode === 'mobile_sim' ? 'active' : ''}`}
-            onClick={() => setDeviceMode('mobile_sim')}
-            title="Simulate Flipkart Mobile App inside phone bezel"
-          >
-            📱 Mobile App
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span>MNC Portals:</span>
-          <a href="http://10.195.18.98:4100" target="_blank" rel="noreferrer" className="portal-link-pill">
-            🏪 Seller (4100)
-          </a>
-          <a href="http://10.195.18.98:4200" target="_blank" rel="noreferrer" className="portal-link-pill">
-            🛡️ Admin (4200)
-          </a>
-        </div>
-      </div>
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -771,166 +712,597 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =========================================================================
-          IF DESKTOP MODE (FULL-WIDTH FLIPKART DESKTOP WEBSITE LAYOUT)
+          DESKTOP & TABLET VIEW (AUTO-ACTIVATED ON SCREENS >= 768px VIA CSS)
+          Full-width Flipkart Desktop Website Layout
           ========================================================================= */}
-      {isDesktopMode && !isPhoneSimulation ? (
-        <div>
-          {/* FLIPKART OFFICIAL BLUE DESKTOP HEADER */}
-          <header className="desktop-header">
-            <div className="desktop-header-inner">
-              {/* Logo */}
-              <div className="desktop-logo-area" onClick={() => { setSearchQuery(''); filterProductsByCategory('all'); }}>
-                <span className="desktop-logo-title">Flipkart</span>
-                <span className="desktop-logo-sub">Explore <span className="plus">Plus ✨</span></span>
+      <div className="desktop-only-view">
+        {/* FLIPKART OFFICIAL BLUE DESKTOP HEADER */}
+        <header className="desktop-header">
+          <div className="desktop-header-inner">
+            {/* Logo */}
+            <div className="desktop-logo-area" onClick={() => { setSearchQuery(''); switchPurpleTab('top_offers'); }}>
+              <span className="desktop-logo-title">Flipkart</span>
+              <span className="desktop-logo-sub">Explore <span className="plus">Plus ✨</span></span>
+            </div>
+
+            {/* Desktop Search Bar */}
+            <div className="desktop-search-container">
+              <form className="desktop-search-box" onSubmit={(e) => { e.preventDefault(); executeSearch(); }}>
+                <input
+                  type="text"
+                  placeholder="Search for Products, Brands and More"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchInput(e.target.value)}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                />
+                <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}>🔍</button>
+              </form>
+
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="search-dropdown">
+                  {suggestions.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="search-dropdown-item"
+                      onClick={() => {
+                        setSearchQuery(item);
+                        executeSearch(item);
+                      }}
+                    >
+                      🔍 {item}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Actions */}
+            <div className="desktop-nav-actions">
+              {user ? (
+                <div
+                  onClick={() => setShowAuthModal(true)}
+                  className="desktop-nav-link"
+                  style={{ background: 'rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: 4 }}
+                >
+                  👤 {user.username} (⚡ {user.superCoins || 150})
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  style={{ background: 'white', color: '#2874f0', border: 'none', padding: '6px 20px', borderRadius: 2, fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
+                >
+                  Login
+                </button>
+              )}
+
+              <a href="http://10.195.18.98:4100" target="_blank" rel="noreferrer" className="desktop-nav-link" title="Open Seller Portal">
+                🏪 Become a Seller
+              </a>
+
+              <a href="http://10.195.18.98:4200" target="_blank" rel="noreferrer" className="desktop-nav-link" title="Open SuperAdmin Console">
+                🛡️ Admin Console
+              </a>
+
+              <div className="desktop-nav-link" onClick={() => setShowOrdersModal(true)}>
+                📦 Orders ({userOrders.length})
               </div>
 
-              {/* Desktop Search Bar */}
-              <div className="desktop-search-container">
-                <form className="desktop-search-box" onSubmit={(e) => { e.preventDefault(); executeSearch(); }}>
-                  <input
-                    type="text"
-                    placeholder="Search for Products, Brands and More"
-                    value={searchQuery}
-                    onChange={(e) => handleSearchInput(e.target.value)}
-                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                  />
-                  <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}>🔍</button>
-                </form>
-
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="search-dropdown">
-                    {suggestions.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="search-dropdown-item"
-                        onClick={() => {
-                          setSearchQuery(item);
-                          executeSearch(item);
-                        }}
-                      >
-                        🔍 {item}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop Actions */}
-              <div className="desktop-nav-actions">
-                {user ? (
-                  <div
-                    onClick={() => setShowAuthModal(true)}
-                    className="desktop-nav-link"
-                    style={{ background: 'rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: 4 }}
-                  >
-                    👤 {user.username} (⚡ {user.superCoins || 150})
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowAuthModal(true)}
-                    style={{ background: 'white', color: '#2874f0', border: 'none', padding: '6px 20px', borderRadius: 2, fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
-                  >
-                    Login
-                  </button>
-                )}
-
-                <a href="http://10.195.18.98:4100" target="_blank" rel="noreferrer" className="desktop-nav-link">
-                  🏪 Become a Seller
-                </a>
-
-                <a href="http://10.195.18.98:4200" target="_blank" rel="noreferrer" className="desktop-nav-link">
-                  🛡️ Admin Console
-                </a>
-
-                <div className="desktop-nav-link" onClick={() => setShowOrdersModal(true)}>
-                  📦 Orders ({userOrders.length})
-                </div>
-
-                <div className="desktop-cart-pill" onClick={() => setShowCartDrawer(true)}>
-                  🛒 Cart ({cartCount})
-                </div>
+              <div className="desktop-cart-pill" onClick={() => setShowCartDrawer(true)}>
+                🛒 Cart ({cartCount})
               </div>
             </div>
-          </header>
+          </div>
+        </header>
 
-          {/* DESKTOP CATEGORIES RIBBON BAR */}
-          <nav className="desktop-cat-ribbon">
-            <div className="desktop-cat-inner">
-              {DESKTOP_CATEGORIES.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="desktop-cat-item"
-                  onClick={() => switchPurpleTab(cat.id)}
-                >
-                  <span className="desktop-cat-icon">{cat.icon}</span>
-                  <span className="desktop-cat-label">{cat.label}</span>
+        {/* DESKTOP CATEGORIES RIBBON BAR */}
+        <nav className="desktop-cat-ribbon">
+          <div className="desktop-cat-inner">
+            {DESKTOP_CATEGORIES.map((cat) => (
+              <div
+                key={cat.id}
+                className="desktop-cat-item"
+                onClick={() => switchPurpleTab(cat.id)}
+              >
+                <span className="desktop-cat-icon">{cat.icon}</span>
+                <span className="desktop-cat-label">{cat.label}</span>
+              </div>
+            ))}
+          </div>
+        </nav>
+
+        {/* DESKTOP MAIN CONTAINER */}
+        <main className="content-wrapper">
+          {/* HERO BIG BILLION DAYS BANNER (WIDE LAPTOP/DESKTOP BANNER) */}
+          <div className="hero-banner-card" onClick={() => switchPurpleTab('fashion')}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span className="bbd-badge">⚡ BIG BILLION DAYS - LIVE NOW</span>
+                <h1 style={{ fontSize: 26, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  India's Fashion & Electronics Capital
+                </h1>
+                <div style={{ fontSize: 32, fontWeight: 900, color: '#ffe500', margin: '6px 0 10px 0' }}>
+                  UP TO 50-80% OFF
+                </div>
+                <div style={{ fontSize: 13, color: '#e0edff' }}>
+                  100% Genuine Brands • Free & Fast Ekart Logistics Delivery • Verified Warranties
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: '16px 24px', backdropFilter: 'blur(8px)' }}>
+                <span style={{ fontSize: 50 }}>👗 📱</span>
+                <div style={{ fontSize: 13, fontWeight: 800, marginTop: 4 }}>Trending Deals</div>
+              </div>
+            </div>
+
+            {/* Bank Offer Strip inside Hero Card */}
+            <div style={{
+              marginTop: 16,
+              background: 'rgba(0,0,0,0.35)',
+              borderRadius: 8,
+              padding: '10px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: 13
+            }}>
+              <span>💳 <strong>HDFC Bank & SBI Cards</strong> | 10% Instant Discount on All Electronics & Fashion*</span>
+              <span style={{ color: '#ffe500', fontWeight: 800, cursor: 'pointer' }}>View All Offers &gt;</span>
+            </div>
+          </div>
+
+          {/* LIVE COUNTDOWN FLASH SALE STRIP */}
+          <div className="countdown-strip">
+            <span style={{ fontSize: 18 }}>⏰</span>
+            <span style={{ fontSize: 15 }}>Flash Sale Starts in</span>
+            <span className="timer-box">{pad2(timeLeft.hrs)}</span>
+            <span style={{ fontWeight: 800 }}>Hr :</span>
+            <span className="timer-box">{pad2(timeLeft.mins)}</span>
+            <span style={{ fontWeight: 800 }}>Min :</span>
+            <span className="timer-box">{pad2(timeLeft.secs)}</span>
+            <span style={{ fontWeight: 800 }}>Sec</span>
+            <span style={{ marginLeft: 16, color: '#2563eb', fontWeight: 800, cursor: 'pointer' }} onClick={() => showToast('Reminders set for flash deals!')}>
+              🔔 Set Reminder
+            </span>
+          </div>
+
+          {/* CURATED CATEGORIES HORIZONTAL ROW */}
+          <div className="curated-categories-wrapper" style={{ background: 'white', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 12, color: '#1e293b' }}>
+              Featured Collections
+            </div>
+            <div style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 6 }}>
+              {[...CURATED_TILES_ROW1, ...CURATED_TILES_ROW2].map((item) => (
+                <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
+                  <div className="curated-img-box" style={{ background: item.bg }}>
+                    <span style={{ fontSize: 28 }}>{item.icon}</span>
+                  </div>
+                  <span className="curated-label">{item.label}</span>
                 </div>
               ))}
             </div>
-          </nav>
+          </div>
 
-          {/* DESKTOP MAIN CONTAINER */}
-          <main className="content-wrapper">
-            {/* HERO BIG BILLION DAYS BANNER (WIDE LAPTOP/DESKTOP BANNER) */}
-            <div className="hero-banner-card" onClick={() => switchPurpleTab('fashion')}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <span className="bbd-badge">⚡ BIG BILLION DAYS - LIVE NOW</span>
-                  <h1 style={{ fontSize: 26, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    India's Fashion & Electronics Capital
-                  </h1>
-                  <div style={{ fontSize: 32, fontWeight: 900, color: '#ffe500', margin: '6px 0 10px 0' }}>
-                    UP TO 50-80% OFF
+          {/* PRODUCT CATALOG HEADER & SORT CHIPS */}
+          <div className="section-header">
+            <div>
+              <span className="section-title">Trending Deals Catalog</span>
+              <span style={{ fontSize: 14, color: '#64748b', marginLeft: 10 }}>({filteredProducts.length} items available)</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => handleSort('relevance')}
+                style={{
+                  background: sortOption === 'relevance' ? '#2874f0' : 'white',
+                  color: sortOption === 'relevance' ? 'white' : '#555',
+                  border: '1px solid #ddd',
+                  padding: '6px 14px',
+                  borderRadius: 16,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Popularity
+              </button>
+              <button
+                onClick={() => handleSort('price_asc')}
+                style={{
+                  background: sortOption === 'price_asc' ? '#2874f0' : 'white',
+                  color: sortOption === 'price_asc' ? 'white' : '#555',
+                  border: '1px solid #ddd',
+                  padding: '6px 14px',
+                  borderRadius: 16,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Price: Low to High
+              </button>
+              <button
+                onClick={() => handleSort('price_desc')}
+                style={{
+                  background: sortOption === 'price_desc' ? '#2874f0' : 'white',
+                  color: sortOption === 'price_desc' ? 'white' : '#555',
+                  border: '1px solid #ddd',
+                  padding: '6px 14px',
+                  borderRadius: 16,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Price: High to Low
+              </button>
+              <button
+                onClick={() => handleSort('rating')}
+                style={{
+                  background: sortOption === 'rating' ? '#2874f0' : 'white',
+                  color: sortOption === 'rating' ? 'white' : '#555',
+                  border: '1px solid #ddd',
+                  padding: '6px 14px',
+                  borderRadius: 16,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ★ 4.0+ Customer Rating
+              </button>
+            </div>
+          </div>
+
+          {/* RESPONSIVE PRODUCT GRID (4 COLS ON LAPTOP, 3 ON TABLET) */}
+          <div className="product-grid-responsive">
+            {filteredProducts.map((p) => {
+              const fallbackSrc = getProductFallback(p.title, p.brand);
+              const imageSrc = (p.images && p.images[0]) || fallbackSrc;
+
+              return (
+                <div key={p.id} className="product-card-mobile">
+                  <div>
+                    <div className="img-container" onClick={() => openProductModal(p)}>
+                      <img
+                        src={imageSrc}
+                        alt={p.title}
+                        className="prod-img"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = fallbackSrc;
+                        }}
+                      />
+                    </div>
+
+                    <div className="prod-title" onClick={() => openProductModal(p)}>
+                      {p.title}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '4px 0' }}>
+                      <span className="badge-assured">⚡ F-Assured</span>
+                      <span
+                        onClick={() => openSellerChat(p)}
+                        style={{ fontSize: 11, color: '#2874f0', fontWeight: 800, cursor: 'pointer' }}
+                        title="Chat with Seller"
+                      >
+                        💬 Chat with Seller
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '4px 0' }}>
+                      <span className="rating-badge">★ {p.rating || 4.5}</span>
+                      <span style={{ fontSize: 11, color: '#888' }}>({p.rating_count || 140} ratings)</span>
+                    </div>
+
+                    <div className="price-container">
+                      <span className="price-val">₹{Number(p.price).toLocaleString('en-IN')}</span>
+                      {p.discount_percentage > 0 && (
+                        <span className="discount-val">{p.discount_percentage}% off</span>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 13, color: '#e0edff' }}>
-                    100% Genuine Brands • Free & Fast Ekart Logistics Delivery • Verified Warranties
+
+                  {/* Action Buttons: Add & Buy */}
+                  <div className="btn-card-group">
+                    <button className="btn-card-add" onClick={() => addToCart(p)}>
+                      + Add to Cart
+                    </button>
+                    <button
+                      className="btn-card-buy"
+                      onClick={() => {
+                        setCheckoutProduct(p);
+                        setShowCheckoutModal(true);
+                      }}
+                    >
+                      Buy Now
+                    </button>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </main>
 
-                <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: '16px 24px', backdropFilter: 'blur(8px)' }}>
-                  <span style={{ fontSize: 50 }}>👗 📱</span>
-                  <div style={{ fontSize: 13, fontWeight: 800, marginTop: 4 }}>Trending Deals</div>
+        {/* DESKTOP FOOTER */}
+        <footer className="desktop-footer">
+          <div className="desktop-footer-inner">
+            <div>
+              <div className="footer-col-title">About</div>
+              <ul className="footer-links">
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Careers</a></li>
+                <li><a href="#">Flipkart Stories</a></li>
+                <li><a href="#">Press</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="footer-col-title">Help</div>
+              <ul className="footer-links">
+                <li><a href="#">Payments</a></li>
+                <li><a href="#">Shipping by Ekart</a></li>
+                <li><a href="#">Cancellation & Returns</a></li>
+                <li><a href="#">FAQ</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="footer-col-title">Consumer Policy</div>
+              <ul className="footer-links">
+                <li><a href="#">Return Policy</a></li>
+                <li><a href="#">Terms Of Use</a></li>
+                <li><a href="#">Security</a></li>
+                <li><a href="#">Privacy</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="footer-col-title">MNC Microservices Architecture</div>
+              <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: 12 }}>
+                Powered by 9 decoupled Docker microservices, Ekart Logistics engine, PostgreSQL 16 catalog, Redis 7 fast cart caching, and Go payment gateway.
+              </p>
+              <div style={{ marginTop: 10 }}>
+                <a href="http://10.195.18.98:4100" target="_blank" rel="noreferrer" style={{ color: '#ffe500', fontWeight: 800 }}>
+                  🏪 Open Seller Portal (Port 4100) &gt;
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="footer-bottom-row">
+            <div>© 2026 Flipkart Clone. All rights reserved. Built for MNC pair testing.</div>
+            <div style={{ display: 'flex', gap: 14 }}>
+              <span>⚡ Ekart Verified</span>
+              <span>🛡️ PCI-DSS Compliant</span>
+              <span>⭐ 100% Genuine Guarantee</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      {/* =========================================================================
+          MOBILE VIEW (AUTO-ACTIVATED ON SCREENS < 768px VIA CSS)
+          Exact Flipkart Mobile App UI
+          ========================================================================= */}
+      <div className="mobile-only-view" style={{ maxWidth: 640, margin: '0 auto', background: '#f1f2f4', minHeight: '100vh', position: 'relative' }}>
+        {/* Mobile Purple Top Bar */}
+        <header className="app-top-section">
+          {/* Quick Switcher Pills */}
+          <div className="brand-pills-row">
+            <div
+              className={`pill-card ${activeBrandPill === 'flipkart' ? 'pill-flipkart' : 'pill-white'}`}
+              onClick={() => { setActiveBrandPill('flipkart'); setMobileAppView('home'); }}
+            >
+              <span>🛍️</span>
+              <span>Flipkart</span>
+            </div>
+
+            <div
+              className={`pill-card ${activeBrandPill === 'value365' ? 'pill-flipkart' : 'pill-white'}`}
+              onClick={() => {
+                setActiveBrandPill('value365');
+                setMobileAppView('home');
+                showToast('Switched to Value 365 store');
+              }}
+            >
+              <span>🥬</span>
+              <span>Value 365</span>
+            </div>
+
+            <div
+              className={`pill-card ${activeBrandPill === 'travel' ? 'pill-flipkart' : 'pill-white'}`}
+              onClick={() => {
+                setActiveBrandPill('travel');
+                showToast('Flipkart Flights & Hotels Booking');
+              }}
+            >
+              <span>✈️</span>
+              <span>Travel</span>
+            </div>
+
+            <div
+              className={`pill-card ${activeBrandPill === 'grocery' ? 'pill-flipkart' : 'pill-white'}`}
+              onClick={() => {
+                setActiveBrandPill('grocery');
+                showToast('Flipkart Supermarket Grocery');
+              }}
+            >
+              <span>🧺</span>
+              <span>Grocery</span>
+            </div>
+          </div>
+
+          {/* Address & SuperCoins */}
+          <div className="address-coins-row">
+            <div className="address-box" onClick={() => setShowAddressModal(true)} title="Change delivery location">
+              <span style={{ fontSize: 14 }}>🏠</span>
+              <span style={{ fontWeight: 800 }}>HOME</span>
+              <span style={{ color: '#e0d4ff', fontSize: 11 }}>{currentAddress.slice(4, 34)}...</span>
+              <span style={{ fontSize: 10 }}>⌄</span>
+            </div>
+
+            <div className="coins-badge" onClick={() => showToast('You have 150 Flipkart SuperCoins!')} title="Flipkart SuperCoins">
+              <span>⚡ {user ? user.superCoins || 150 : 150}</span>
+              <span style={{ fontSize: 14 }}>🪙</span>
+            </div>
+          </div>
+
+          {/* Mobile Search Box */}
+          <div className="app-search-box">
+            <span style={{ color: '#777', fontSize: 16 }}>🔍</span>
+            <input
+              type="text"
+              placeholder="Search for Products, Brands and More"
+              value={searchQuery}
+              onChange={(e) => handleSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') executeSearch(); }}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            />
+            <div className="search-icons-group">
+              <span style={{ cursor: 'pointer' }} onClick={() => showToast('🎤 Voice Search listening...')} title="Voice Search">🎤</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => showToast('📷 Flipkart Visual Lens activated')} title="Visual Camera Lens">📷</span>
+            </div>
+
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="search-dropdown">
+                {suggestions.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="search-dropdown-item"
+                    onClick={() => {
+                      setSearchQuery(item);
+                      executeSearch(item);
+                    }}
+                  >
+                    🔍 {item}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Purple Category Navigation Tabs */}
+          {mobileAppView === 'home' && (
+            <div className="purple-tabs-row">
+              <div
+                className={`purple-tab ${activeTab === 'foryou' ? 'active' : ''}`}
+                onClick={() => switchPurpleTab('foryou')}
+              >
+                <span className="purple-tab-icon">✨</span>
+                <span>For You</span>
+              </div>
+
+              <div
+                className={`purple-tab ${activeTab === 'fashion' ? 'active' : ''}`}
+                onClick={() => switchPurpleTab('fashion')}
+              >
+                <span className="purple-tab-icon">👗</span>
+                <span>Fashion</span>
+              </div>
+
+              <div
+                className={`purple-tab ${activeTab === 'mobiles' ? 'active' : ''}`}
+                onClick={() => switchPurpleTab('mobiles')}
+              >
+                <span className="purple-tab-icon">📱</span>
+                <span>Mobiles</span>
+              </div>
+
+              <div
+                className={`purple-tab ${activeTab === 'electronics' ? 'active' : ''}`}
+                onClick={() => switchPurpleTab('electronics')}
+              >
+                <span className="purple-tab-icon">💻</span>
+                <span>Electronics</span>
+              </div>
+
+              <div
+                className={`purple-tab ${activeTab === 'beauty' ? 'active' : ''}`}
+                onClick={() => switchPurpleTab('beauty')}
+              >
+                <span className="purple-tab-icon">💄</span>
+                <span>Beauty</span>
+              </div>
+
+              <div
+                className={`purple-tab ${activeTab === 'home' ? 'active' : ''}`}
+                onClick={() => switchPurpleTab('home')}
+              >
+                <span className="purple-tab-icon">🛋️</span>
+                <span>Home</span>
+              </div>
+            </div>
+          )}
+        </header>
+
+        {/* MOBILE VIEW: HOME VIEW */}
+        {mobileAppView === 'home' && (
+          <main style={{ paddingBottom: 64 }}>
+            {/* Hero Banner */}
+            <div className="hero-banner-card" onClick={() => switchPurpleTab('fashion')} style={{ margin: '8px 12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <span className="bbd-badge">⚡ BIG BILLION DAYS</span>
+                  <h2 style={{ fontSize: 17, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    India's Fashion Capital
+                  </h2>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#ffe500', margin: '4px 0 6px 0' }}>
+                    50-80% OFF
+                  </div>
+                </div>
+                <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 12px' }}>
+                  <span style={{ fontSize: 32 }}>👗</span>
+                  <div style={{ fontSize: 10, fontWeight: 800, marginTop: 2 }}>Trending</div>
                 </div>
               </div>
 
-              {/* Bank Offer Strip inside Hero Card */}
               <div style={{
-                marginTop: 16,
-                background: 'rgba(0,0,0,0.35)',
-                borderRadius: 8,
-                padding: '10px 16px',
+                marginTop: 10,
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: 6,
+                padding: '6px 10px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                fontSize: 13
+                fontSize: 11
               }}>
-                <span>💳 <strong>HDFC Bank & SBI Cards</strong> | 10% Instant Discount on All Electronics & Fashion*</span>
-                <span style={{ color: '#ffe500', fontWeight: 800, cursor: 'pointer' }}>View All Offers &gt;</span>
+                <span>💳 <strong>HDFC Bank</strong> | 10% Instant Discount*</span>
+                <span style={{ color: '#ffe500', fontWeight: 800 }}>T&C Apply &gt;</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 10 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffe500' }}></span>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
               </div>
             </div>
 
-            {/* LIVE COUNTDOWN FLASH SALE STRIP */}
-            <div className="countdown-strip">
-              <span style={{ fontSize: 18 }}>⏰</span>
-              <span style={{ fontSize: 15 }}>Flash Sale Starts in</span>
+            {/* Countdown */}
+            <div className="countdown-strip" style={{ margin: '8px 12px' }}>
+              <span style={{ fontSize: 15 }}>⏰</span>
+              <span>Starts in</span>
               <span className="timer-box">{pad2(timeLeft.hrs)}</span>
               <span style={{ fontWeight: 800 }}>Hr :</span>
               <span className="timer-box">{pad2(timeLeft.mins)}</span>
               <span style={{ fontWeight: 800 }}>Min :</span>
               <span className="timer-box">{pad2(timeLeft.secs)}</span>
               <span style={{ fontWeight: 800 }}>Sec</span>
-              <span style={{ marginLeft: 16, color: '#2563eb', fontWeight: 800, cursor: 'pointer' }} onClick={() => showToast('Reminders set for flash deals!')}>
-                🔔 Set Reminder
-              </span>
             </div>
 
-            {/* CURATED CATEGORIES HORIZONTAL ROW */}
-            <div className="curated-categories-wrapper" style={{ background: 'white', padding: 16, borderRadius: 8, marginBottom: 16 }}>
-              <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 12, color: '#1e293b' }}>
-                Featured Collections
-              </div>
-              <div style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 6 }}>
-                {[...CURATED_TILES_ROW1, ...CURATED_TILES_ROW2].map((item) => (
+            {/* 2-Row Curated Category Tiles */}
+            <div className="curated-categories-wrapper" style={{ padding: '6px 12px' }}>
+              <div className="curated-grid-scroll">
+                {CURATED_TILES_ROW1.map((item) => (
+                  <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
+                    <div className="curated-img-box" style={{ background: item.bg }}>
+                      <span style={{ fontSize: 28 }}>{item.icon}</span>
+                    </div>
+                    <span className="curated-label">{item.label}</span>
+                  </div>
+                ))}
+
+                {CURATED_TILES_ROW2.map((item) => (
                   <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
                     <div className="curated-img-box" style={{ background: item.bg }}>
                       <span style={{ fontSize: 28 }}>{item.icon}</span>
@@ -941,79 +1313,37 @@ export default function Home({ initialProducts }) {
               </div>
             </div>
 
-            {/* PRODUCT CATALOG HEADER & SORT CHIPS */}
-            <div className="section-header">
+            {/* Product Header */}
+            <div className="section-header" style={{ padding: '8px 12px' }}>
               <div>
-                <span className="section-title">Trending Deals Catalog</span>
-                <span style={{ fontSize: 14, color: '#64748b', marginLeft: 10 }}>({filteredProducts.length} items available)</span>
+                <span className="section-title">Trending Catalog</span>
+                <span style={{ fontSize: 11, color: '#777', marginLeft: 6 }}>({filteredProducts.length} items)</span>
               </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 4 }}>
                 <button
                   onClick={() => handleSort('relevance')}
-                  style={{
-                    background: sortOption === 'relevance' ? '#2874f0' : 'white',
-                    color: sortOption === 'relevance' ? 'white' : '#555',
-                    border: '1px solid #ddd',
-                    padding: '6px 14px',
-                    borderRadius: 16,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
+                  style={{ background: sortOption === 'relevance' ? '#2874f0' : 'white', color: sortOption === 'relevance' ? 'white' : '#555', border: '1px solid #ddd', padding: '3px 6px', borderRadius: 12, fontSize: 10, fontWeight: 700 }}
                 >
-                  Popularity
+                  Popular
                 </button>
                 <button
                   onClick={() => handleSort('price_asc')}
-                  style={{
-                    background: sortOption === 'price_asc' ? '#2874f0' : 'white',
-                    color: sortOption === 'price_asc' ? 'white' : '#555',
-                    border: '1px solid #ddd',
-                    padding: '6px 14px',
-                    borderRadius: 16,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
+                  style={{ background: sortOption === 'price_asc' ? '#2874f0' : 'white', color: sortOption === 'price_asc' ? 'white' : '#555', border: '1px solid #ddd', padding: '3px 6px', borderRadius: 12, fontSize: 10, fontWeight: 700 }}
                 >
-                  Price: Low to High
-                </button>
-                <button
-                  onClick={() => handleSort('price_desc')}
-                  style={{
-                    background: sortOption === 'price_desc' ? '#2874f0' : 'white',
-                    color: sortOption === 'price_desc' ? 'white' : '#555',
-                    border: '1px solid #ddd',
-                    padding: '6px 14px',
-                    borderRadius: 16,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Price: High to Low
+                  Price ⬇
                 </button>
                 <button
                   onClick={() => handleSort('rating')}
-                  style={{
-                    background: sortOption === 'rating' ? '#2874f0' : 'white',
-                    color: sortOption === 'rating' ? 'white' : '#555',
-                    border: '1px solid #ddd',
-                    padding: '6px 14px',
-                    borderRadius: 16,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
+                  style={{ background: sortOption === 'rating' ? '#2874f0' : 'white', color: sortOption === 'rating' ? 'white' : '#555', border: '1px solid #ddd', padding: '3px 6px', borderRadius: 12, fontSize: 10, fontWeight: 700 }}
                 >
-                  ★ 4.0+ Customer Rating
+                  ★ 4.0+
                 </button>
               </div>
             </div>
 
-            {/* 4-COLUMN LAPTOP PRODUCT GRID */}
-            <div className="product-grid-responsive">
+            {/* 2-Column Mobile Product Grid */}
+            <div className="product-grid-responsive" style={{ padding: '0 10px', gridTemplateColumns: 'repeat(2, 1fr)' }}>
               {filteredProducts.map((p) => {
                 const fallbackSrc = getProductFallback(p.title, p.brand);
                 const imageSrc = (p.images && p.images[0]) || fallbackSrc;
@@ -1037,20 +1367,20 @@ export default function Home({ initialProducts }) {
                         {p.title}
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '4px 0' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '3px 0' }}>
                         <span className="badge-assured">⚡ F-Assured</span>
                         <span
                           onClick={() => openSellerChat(p)}
-                          style={{ fontSize: 11, color: '#2874f0', fontWeight: 800, cursor: 'pointer' }}
+                          style={{ fontSize: 10, color: '#2874f0', fontWeight: 800, cursor: 'pointer' }}
                           title="Chat with Seller"
                         >
-                          💬 Chat with Seller
+                          💬 Chat
                         </span>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '4px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0' }}>
                         <span className="rating-badge">★ {p.rating || 4.5}</span>
-                        <span style={{ fontSize: 11, color: '#888' }}>({p.rating_count || 140} ratings)</span>
+                        <span style={{ fontSize: 10, color: '#888' }}>({p.rating_count || 140})</span>
                       </div>
 
                       <div className="price-container">
@@ -1061,10 +1391,9 @@ export default function Home({ initialProducts }) {
                       </div>
                     </div>
 
-                    {/* Action Buttons: Add & Buy */}
                     <div className="btn-card-group">
                       <button className="btn-card-add" onClick={() => addToCart(p)}>
-                        + Add to Cart
+                        + Add
                       </button>
                       <button
                         className="btn-card-buy"
@@ -1073,7 +1402,7 @@ export default function Home({ initialProducts }) {
                           setShowCheckoutModal(true);
                         }}
                       >
-                        Buy Now
+                        Buy
                       </button>
                     </div>
                   </div>
@@ -1081,658 +1410,295 @@ export default function Home({ initialProducts }) {
               })}
             </div>
           </main>
+        )}
 
-          {/* DESKTOP FOOTER */}
-          <footer className="desktop-footer">
-            <div className="desktop-footer-inner">
-              <div>
-                <div className="footer-col-title">About</div>
-                <ul className="footer-links">
-                  <li><a href="#">Contact Us</a></li>
-                  <li><a href="#">About Us</a></li>
-                  <li><a href="#">Careers</a></li>
-                  <li><a href="#">Flipkart Stories</a></li>
-                  <li><a href="#">Press</a></li>
-                </ul>
-              </div>
-
-              <div>
-                <div className="footer-col-title">Help</div>
-                <ul className="footer-links">
-                  <li><a href="#">Payments</a></li>
-                  <li><a href="#">Shipping by Ekart</a></li>
-                  <li><a href="#">Cancellation & Returns</a></li>
-                  <li><a href="#">FAQ</a></li>
-                </ul>
-              </div>
-
-              <div>
-                <div className="footer-col-title">Consumer Policy</div>
-                <ul className="footer-links">
-                  <li><a href="#">Return Policy</a></li>
-                  <li><a href="#">Terms Of Use</a></li>
-                  <li><a href="#">Security</a></li>
-                  <li><a href="#">Privacy</a></li>
-                </ul>
-              </div>
-
-              <div>
-                <div className="footer-col-title">MNC Microservices Architecture</div>
-                <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: 12 }}>
-                  Powered by 9 decoupled Docker microservices, Ekart Logistics engine, PostgreSQL 16 catalog, Redis 7 fast cart caching, and Go payment gateway.
-                </p>
-                <div style={{ marginTop: 10 }}>
-                  <a href="http://10.195.18.98:4100" target="_blank" rel="noreferrer" style={{ color: '#ffe500', fontWeight: 800 }}>
-                    🏪 Open Seller Portal (Port 4100) &gt;
-                  </a>
-                </div>
-              </div>
+        {/* MOBILE VIEW: PLAY REELS */}
+        {mobileAppView === 'play' && (
+          <section className="reels-container" style={{ padding: '10px 14px 70px 14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
+              <h2 style={{ fontSize: 18, fontWeight: 900, color: '#111' }}>▶️ Flipkart Video & Deals Live</h2>
+              <span style={{ fontSize: 11, background: '#fee2e2', color: '#b91c1c', fontWeight: 800, padding: '3px 8px', borderRadius: 12 }}>
+                🔴 3.4k Watching
+              </span>
             </div>
 
-            <div className="footer-bottom-row">
-              <div>© 2026 Flipkart Clone. All rights reserved. Built for MNC pair testing.</div>
-              <div style={{ display: 'flex', gap: 14 }}>
-                <span>⚡ Ekart Verified</span>
-                <span>🛡️ PCI-DSS Compliant</span>
-                <span>⭐ 100% Genuine Guarantee</span>
-              </div>
-            </div>
-          </footer>
-        </div>
-      ) : (
-        /* =========================================================================
-           MOBILE APP LAYOUT (RUNS ON MOBILE OR INSIDE SIMULATED PHONE BEZEL)
-           ========================================================================= */
-        <div className={isPhoneSimulation ? 'simulated-phone-frame' : ''} style={{ maxWidth: isPhoneSimulation ? 440 : 640, margin: '0 auto', background: '#f1f2f4', minHeight: '100vh', position: 'relative' }}>
-          {/* 1. Mobile Purple Top Bar */}
-          <header className="app-top-section">
-            {/* Quick Switcher Pills */}
-            <div className="brand-pills-row">
-              <div
-                className={`pill-card ${activeBrandPill === 'flipkart' ? 'pill-flipkart' : 'pill-white'}`}
-                onClick={() => { setActiveBrandPill('flipkart'); setAppView('home'); }}
-              >
-                <span>🛍️</span>
-                <span>Flipkart</span>
-              </div>
+            {PLAY_REELS_DATA.map((reel) => {
+              const isLiked = likedReels[reel.id];
+              return (
+                <div key={reel.id} className="reel-card">
+                  <div className="reel-video-placeholder" style={{ background: reel.bgGrad }}>
+                    <div className="reel-live-tag">● LIVE DEMO</div>
 
-              <div
-                className={`pill-card ${activeBrandPill === 'value365' ? 'pill-flipkart' : 'pill-white'}`}
-                onClick={() => {
-                  setActiveBrandPill('value365');
-                  setAppView('home');
-                  showToast('Switched to Value 365 store');
-                }}
-              >
-                <span>🥬</span>
-                <span>Value 365</span>
-              </div>
+                    <div className="reel-actions-column">
+                      <button
+                        className="reel-action-btn"
+                        onClick={() => handleLikeReel(reel.id)}
+                        style={{ color: isLiked ? '#ef4444' : 'white' }}
+                      >
+                        <span>{isLiked ? '❤️' : '🤍'}</span>
+                        <span className="reel-action-label">{reelLikes[reel.id]}</span>
+                      </button>
 
-              <div
-                className={`pill-card ${activeBrandPill === 'travel' ? 'pill-flipkart' : 'pill-white'}`}
-                onClick={() => {
-                  setActiveBrandPill('travel');
-                  showToast('Flipkart Flights & Hotels Booking');
-                }}
-              >
-                <span>✈️</span>
-                <span>Travel</span>
-              </div>
+                      <button
+                        className="reel-action-btn"
+                        onClick={() => {
+                          const prod = products.find(p => p.id === reel.productId) || { id: reel.productId, title: reel.productTitle, price: reel.price };
+                          openSellerChat(prod);
+                        }}
+                      >
+                        <span>💬</span>
+                        <span className="reel-action-label">{reel.comments}</span>
+                      </button>
 
-              <div
-                className={`pill-card ${activeBrandPill === 'grocery' ? 'pill-flipkart' : 'pill-white'}`}
-                onClick={() => {
-                  setActiveBrandPill('grocery');
-                  showToast('Flipkart Supermarket Grocery');
-                }}
-              >
-                <span>🧺</span>
-                <span>Grocery</span>
-              </div>
-            </div>
+                      <button
+                        className="reel-action-btn"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(window.location.href);
+                          showToast('🔗 Video deal link copied!');
+                        }}
+                      >
+                        <span>🔗</span>
+                        <span className="reel-action-label">Share</span>
+                      </button>
+                    </div>
 
-            {/* Address & SuperCoins */}
-            <div className="address-coins-row">
-              <div className="address-box" onClick={() => setShowAddressModal(true)} title="Change delivery location">
-                <span style={{ fontSize: 14 }}>🏠</span>
-                <span style={{ fontWeight: 800 }}>HOME</span>
-                <span style={{ color: '#e0d4ff', fontSize: 11 }}>{currentAddress.slice(4, 34)}...</span>
-                <span style={{ fontSize: 10 }}>⌄</span>
-              </div>
+                    <div className="reel-info-bottom">
+                      <div style={{ fontSize: 36, marginBottom: 8 }}>{reel.icon}</div>
+                      <div className="reel-creator">{reel.creator}</div>
+                      <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 4 }}>{reel.title}</h3>
+                      <p className="reel-desc">{reel.desc}</p>
+                    </div>
+                  </div>
 
-              <div className="coins-badge" onClick={() => showToast('You have 150 Flipkart SuperCoins!')} title="Flipkart SuperCoins">
-                <span>⚡ {user ? user.superCoins || 150 : 150}</span>
-                <span style={{ fontSize: 14 }}>🪙</span>
-              </div>
-            </div>
+                  <div className="reel-buy-bar">
+                    <div>
+                      <div style={{ fontSize: 11, color: '#9ca3af' }}>Featured Deal</div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: 'white' }}>₹{Number(reel.price).toLocaleString('en-IN')}</div>
+                    </div>
 
-            {/* Search Box */}
-            <div className="app-search-box">
-              <span style={{ color: '#777', fontSize: 16 }}>🔍</span>
-              <input
-                type="text"
-                placeholder="Search for Products, Brands and More"
-                value={searchQuery}
-                onChange={(e) => handleSearchInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') executeSearch(); }}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              />
-              <div className="search-icons-group">
-                <span style={{ cursor: 'pointer' }} onClick={() => showToast('🎤 Voice Search listening...')} title="Voice Search">🎤</span>
-                <span style={{ cursor: 'pointer' }} onClick={() => showToast('📷 Flipkart Visual Lens activated')} title="Visual Camera Lens">📷</span>
-              </div>
-
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="search-dropdown">
-                  {suggestions.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="search-dropdown-item"
+                    <button
+                      className="reel-buy-btn"
                       onClick={() => {
-                        setSearchQuery(item);
-                        executeSearch(item);
+                        const prod = products.find(p => p.id === reel.productId) || { id: reel.productId, title: reel.productTitle, price: reel.price };
+                        setCheckoutProduct(prod);
+                        setShowCheckoutModal(true);
                       }}
                     >
-                      🔍 {item}
-                    </div>
+                      ⚡ Buy Now
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        )}
+
+        {/* MOBILE VIEW: CATEGORIES DIRECTORY */}
+        {mobileAppView === 'categories' && (
+          <section className="cat-directory-container" style={{ padding: '10px 14px 70px 14px' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, marginBottom: 12, color: '#111' }}>🔲 All Categories</h2>
+
+            {CATEGORY_TREE_DATA.map((cat) => (
+              <div key={cat.id} className="cat-directory-card">
+                <div
+                  className="cat-directory-header"
+                  onClick={() => executeSearch(cat.name.split(' ')[0])}
+                >
+                  <div className="cat-icon-badge">{cat.icon}</div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 14, color: '#1e293b' }}>{cat.name}</div>
+                    <div style={{ fontSize: 11, color: '#64748b' }}>Explore top deals</div>
+                  </div>
+                </div>
+
+                <div className="cat-chips-list">
+                  {cat.subcategories.map((sub, idx) => (
+                    <span
+                      key={idx}
+                      className="cat-chip-tag"
+                      onClick={() => executeSearch(sub)}
+                    >
+                      {sub}
+                    </span>
                   ))}
                 </div>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {/* MOBILE VIEW: ACCOUNT */}
+        {mobileAppView === 'account' && (
+          <section className="account-container" style={{ padding: '10px 14px 70px 14px' }}>
+            <div className="account-header-card">
+              <div className="account-avatar">
+                {user ? user.username.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>{user ? user.username : 'Guest User'}</div>
+                <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>+91 98765 43210 • Verified</div>
+                <div style={{ marginTop: 4 }}>
+                  <span style={{ background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 800 }}>
+                    ⚡ Flipkart Plus Member
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowAuthModal(true)}
+                style={{ background: '#f1f5f9', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Switch
+              </button>
+            </div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+              color: 'white',
+              borderRadius: 10,
+              padding: '12px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 14
+            }}>
+              <div>
+                <div style={{ fontSize: 11, opacity: 0.9 }}>Available Balance</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: '#fde047' }}>⚡ {user ? user.superCoins || 150 : 150} SuperCoins</div>
+              </div>
+              <button
+                onClick={() => showToast('SuperCoins applied for discount')}
+                style={{ background: '#fde047', color: '#1e3a8a', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+              >
+                Use Coins
+              </button>
+            </div>
+
+            <div className="account-quick-grid">
+              <div className="account-nav-card" onClick={fetchUserOrders}>
+                <span style={{ fontSize: 22 }}>📦</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 13 }}>Orders</div>
+                  <div style={{ fontSize: 10, color: '#64748b' }}>{userOrders.length} placed</div>
+                </div>
+              </div>
+
+              <div className="account-nav-card" onClick={() => setShowAddressModal(true)}>
+                <span style={{ fontSize: 22 }}>🏠</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 13 }}>Addresses</div>
+                  <div style={{ fontSize: 10, color: '#64748b' }}>2 saved</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: 'white', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Past Orders</h3>
+              {userOrders.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px 0', color: '#888', fontSize: 12 }}>
+                  <p>No orders recorded.</p>
+                </div>
+              ) : (
+                userOrders.slice(0, 3).map((ord) => (
+                  <div key={ord.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: 10, marginBottom: 10, fontSize: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
+                      <span>Order #{ord.id.slice(0, 8)}...</span>
+                      <span style={{ color: '#16a34a' }}>✓ {ord.status}</span>
+                    </div>
+                    <div style={{ color: '#64748b', margin: '2px 0' }}>
+                      Ekart Tracking: <strong style={{ color: '#2563eb' }}>{ord.trackingNumber}</strong>
+                    </div>
+                    <div style={{ fontWeight: 800, marginTop: 4 }}>
+                      Total: ₹{Number(ord.totalAmount).toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
 
-            {/* Purple Category Navigation Tabs */}
-            {appView === 'home' && (
-              <div className="purple-tabs-row">
-                <div
-                  className={`purple-tab ${activeTab === 'foryou' ? 'active' : ''}`}
-                  onClick={() => switchPurpleTab('foryou')}
+            {/* Portal links in Mobile Account Tab */}
+            <div style={{ background: 'white', borderRadius: 12, padding: 14 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>MNC Partner Portals</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <a
+                  href="http://10.195.18.98:4100"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 8, textDecoration: 'none', color: '#1e293b', fontSize: 12, fontWeight: 700 }}
                 >
-                  <span className="purple-tab-icon">✨</span>
-                  <span>For You</span>
-                </div>
-
-                <div
-                  className={`purple-tab ${activeTab === 'fashion' ? 'active' : ''}`}
-                  onClick={() => switchPurpleTab('fashion')}
+                  <span>🏪 Seller Portal (Port 4100)</span>
+                  <span style={{ color: '#2563eb' }}>Open →</span>
+                </a>
+                <a
+                  href="http://10.195.18.98:4200"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 8, textDecoration: 'none', color: '#1e293b', fontSize: 12, fontWeight: 700 }}
                 >
-                  <span className="purple-tab-icon">👗</span>
-                  <span>Fashion</span>
-                </div>
-
-                <div
-                  className={`purple-tab ${activeTab === 'mobiles' ? 'active' : ''}`}
-                  onClick={() => switchPurpleTab('mobiles')}
-                >
-                  <span className="purple-tab-icon">📱</span>
-                  <span>Mobiles</span>
-                </div>
-
-                <div
-                  className={`purple-tab ${activeTab === 'electronics' ? 'active' : ''}`}
-                  onClick={() => switchPurpleTab('electronics')}
-                >
-                  <span className="purple-tab-icon">💻</span>
-                  <span>Electronics</span>
-                </div>
-
-                <div
-                  className={`purple-tab ${activeTab === 'beauty' ? 'active' : ''}`}
-                  onClick={() => switchPurpleTab('beauty')}
-                >
-                  <span className="purple-tab-icon">💄</span>
-                  <span>Beauty</span>
-                </div>
-
-                <div
-                  className={`purple-tab ${activeTab === 'home' ? 'active' : ''}`}
-                  onClick={() => switchPurpleTab('home')}
-                >
-                  <span className="purple-tab-icon">🛋️</span>
-                  <span>Home</span>
-                </div>
+                  <span>🛡️ SuperAdmin Console (Port 4200)</span>
+                  <span style={{ color: '#2563eb' }}>Open →</span>
+                </a>
               </div>
-            )}
-          </header>
-
-          {/* VIEW: HOME VIEW */}
-          {appView === 'home' && (
-            <main style={{ paddingBottom: 64 }}>
-              {/* Hero Banner */}
-              <div className="hero-banner-card" onClick={() => switchPurpleTab('fashion')} style={{ margin: '8px 12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span className="bbd-badge">⚡ BIG BILLION DAYS</span>
-                    <h2 style={{ fontSize: 17, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      India's Fashion Capital
-                    </h2>
-                    <div style={{ fontSize: 24, fontWeight: 900, color: '#ffe500', margin: '4px 0 6px 0' }}>
-                      50-80% OFF
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 12px' }}>
-                    <span style={{ fontSize: 32 }}>👗</span>
-                    <div style={{ fontSize: 10, fontWeight: 800, marginTop: 2 }}>Trending</div>
-                  </div>
-                </div>
-
-                <div style={{
-                  marginTop: 10,
-                  background: 'rgba(0,0,0,0.3)',
-                  borderRadius: 6,
-                  padding: '6px 10px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: 11
-                }}>
-                  <span>💳 <strong>HDFC Bank</strong> | 10% Instant Discount*</span>
-                  <span style={{ color: '#ffe500', fontWeight: 800 }}>T&C Apply &gt;</span>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 10 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffe500' }}></span>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}></span>
-                </div>
-              </div>
-
-              {/* Countdown */}
-              <div className="countdown-strip" style={{ margin: '8px 12px' }}>
-                <span style={{ fontSize: 15 }}>⏰</span>
-                <span>Starts in</span>
-                <span className="timer-box">{pad2(timeLeft.hrs)}</span>
-                <span style={{ fontWeight: 800 }}>Hr :</span>
-                <span className="timer-box">{pad2(timeLeft.mins)}</span>
-                <span style={{ fontWeight: 800 }}>Min :</span>
-                <span className="timer-box">{pad2(timeLeft.secs)}</span>
-                <span style={{ fontWeight: 800 }}>Sec</span>
-              </div>
-
-              {/* 2-Row Curated Category Tiles */}
-              <div className="curated-categories-wrapper" style={{ padding: '6px 12px' }}>
-                <div className="curated-grid-scroll">
-                  {CURATED_TILES_ROW1.map((item) => (
-                    <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
-                      <div className="curated-img-box" style={{ background: item.bg }}>
-                        <span style={{ fontSize: 28 }}>{item.icon}</span>
-                      </div>
-                      <span className="curated-label">{item.label}</span>
-                    </div>
-                  ))}
-
-                  {CURATED_TILES_ROW2.map((item) => (
-                    <div key={item.id} className="curated-item" onClick={() => executeSearch(item.label)}>
-                      <div className="curated-img-box" style={{ background: item.bg }}>
-                        <span style={{ fontSize: 28 }}>{item.icon}</span>
-                      </div>
-                      <span className="curated-label">{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Product Header */}
-              <div className="section-header" style={{ padding: '8px 12px' }}>
-                <div>
-                  <span className="section-title">Trending Catalog</span>
-                  <span style={{ fontSize: 11, color: '#777', marginLeft: 6 }}>({filteredProducts.length} items)</span>
-                </div>
-
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button
-                    onClick={() => handleSort('relevance')}
-                    style={{ background: sortOption === 'relevance' ? '#2874f0' : 'white', color: sortOption === 'relevance' ? 'white' : '#555', border: '1px solid #ddd', padding: '3px 6px', borderRadius: 12, fontSize: 10, fontWeight: 700 }}
-                  >
-                    Popular
-                  </button>
-                  <button
-                    onClick={() => handleSort('price_asc')}
-                    style={{ background: sortOption === 'price_asc' ? '#2874f0' : 'white', color: sortOption === 'price_asc' ? 'white' : '#555', border: '1px solid #ddd', padding: '3px 6px', borderRadius: 12, fontSize: 10, fontWeight: 700 }}
-                  >
-                    Price ⬇
-                  </button>
-                  <button
-                    onClick={() => handleSort('rating')}
-                    style={{ background: sortOption === 'rating' ? '#2874f0' : 'white', color: sortOption === 'rating' ? 'white' : '#555', border: '1px solid #ddd', padding: '3px 6px', borderRadius: 12, fontSize: 10, fontWeight: 700 }}
-                  >
-                    ★ 4.0+
-                  </button>
-                </div>
-              </div>
-
-              {/* 2-Column Mobile Product Grid */}
-              <div className="product-grid-responsive" style={{ padding: '0 10px', gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                {filteredProducts.map((p) => {
-                  const fallbackSrc = getProductFallback(p.title, p.brand);
-                  const imageSrc = (p.images && p.images[0]) || fallbackSrc;
-
-                  return (
-                    <div key={p.id} className="product-card-mobile">
-                      <div>
-                        <div className="img-container" onClick={() => openProductModal(p)}>
-                          <img
-                            src={imageSrc}
-                            alt={p.title}
-                            className="prod-img"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = fallbackSrc;
-                            }}
-                          />
-                        </div>
-
-                        <div className="prod-title" onClick={() => openProductModal(p)}>
-                          {p.title}
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '3px 0' }}>
-                          <span className="badge-assured">⚡ F-Assured</span>
-                          <span
-                            onClick={() => openSellerChat(p)}
-                            style={{ fontSize: 10, color: '#2874f0', fontWeight: 800, cursor: 'pointer' }}
-                            title="Chat with Seller"
-                          >
-                            💬 Chat
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0' }}>
-                          <span className="rating-badge">★ {p.rating || 4.5}</span>
-                          <span style={{ fontSize: 10, color: '#888' }}>({p.rating_count || 140})</span>
-                        </div>
-
-                        <div className="price-container">
-                          <span className="price-val">₹{Number(p.price).toLocaleString('en-IN')}</span>
-                          {p.discount_percentage > 0 && (
-                            <span className="discount-val">{p.discount_percentage}% off</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="btn-card-group">
-                        <button className="btn-card-add" onClick={() => addToCart(p)}>
-                          + Add
-                        </button>
-                        <button
-                          className="btn-card-buy"
-                          onClick={() => {
-                            setCheckoutProduct(p);
-                            setShowCheckoutModal(true);
-                          }}
-                        >
-                          Buy
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </main>
-          )}
-
-          {/* VIEW: PLAY REELS */}
-          {appView === 'play' && (
-            <section className="reels-container" style={{ padding: '10px 14px 70px 14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-                <h2 style={{ fontSize: 18, fontWeight: 900, color: '#111' }}>▶️ Flipkart Video & Deals Live</h2>
-                <span style={{ fontSize: 11, background: '#fee2e2', color: '#b91c1c', fontWeight: 800, padding: '3px 8px', borderRadius: 12 }}>
-                  🔴 3.4k Watching
-                </span>
-              </div>
-
-              {PLAY_REELS_DATA.map((reel) => {
-                const isLiked = likedReels[reel.id];
-                return (
-                  <div key={reel.id} className="reel-card">
-                    <div className="reel-video-placeholder" style={{ background: reel.bgGrad }}>
-                      <div className="reel-live-tag">● LIVE DEMO</div>
-
-                      <div className="reel-actions-column">
-                        <button
-                          className="reel-action-btn"
-                          onClick={() => handleLikeReel(reel.id)}
-                          style={{ color: isLiked ? '#ef4444' : 'white' }}
-                        >
-                          <span>{isLiked ? '❤️' : '🤍'}</span>
-                          <span className="reel-action-label">{reelLikes[reel.id]}</span>
-                        </button>
-
-                        <button
-                          className="reel-action-btn"
-                          onClick={() => {
-                            const prod = products.find(p => p.id === reel.productId) || { id: reel.productId, title: reel.productTitle, price: reel.price };
-                            openSellerChat(prod);
-                          }}
-                        >
-                          <span>💬</span>
-                          <span className="reel-action-label">{reel.comments}</span>
-                        </button>
-
-                        <button
-                          className="reel-action-btn"
-                          onClick={() => {
-                            navigator.clipboard?.writeText(window.location.href);
-                            showToast('🔗 Video deal link copied!');
-                          }}
-                        >
-                          <span>🔗</span>
-                          <span className="reel-action-label">Share</span>
-                        </button>
-                      </div>
-
-                      <div className="reel-info-bottom">
-                        <div style={{ fontSize: 36, marginBottom: 8 }}>{reel.icon}</div>
-                        <div className="reel-creator">{reel.creator}</div>
-                        <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 4 }}>{reel.title}</h3>
-                        <p className="reel-desc">{reel.desc}</p>
-                      </div>
-                    </div>
-
-                    <div className="reel-buy-bar">
-                      <div>
-                        <div style={{ fontSize: 11, color: '#9ca3af' }}>Featured Deal</div>
-                        <div style={{ fontSize: 14, fontWeight: 900, color: 'white' }}>₹{Number(reel.price).toLocaleString('en-IN')}</div>
-                      </div>
-
-                      <button
-                        className="reel-buy-btn"
-                        onClick={() => {
-                          const prod = products.find(p => p.id === reel.productId) || { id: reel.productId, title: reel.productTitle, price: reel.price };
-                          setCheckoutProduct(prod);
-                          setShowCheckoutModal(true);
-                        }}
-                      >
-                        ⚡ Buy Now
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </section>
-          )}
-
-          {/* VIEW: CATEGORIES DIRECTORY */}
-          {appView === 'categories' && (
-            <section className="cat-directory-container" style={{ padding: '10px 14px 70px 14px' }}>
-              <h2 style={{ fontSize: 18, fontWeight: 900, marginBottom: 12, color: '#111' }}>🔲 All Categories</h2>
-
-              {CATEGORY_TREE_DATA.map((cat) => (
-                <div key={cat.id} className="cat-directory-card">
-                  <div
-                    className="cat-directory-header"
-                    onClick={() => executeSearch(cat.name.split(' ')[0])}
-                  >
-                    <div className="cat-icon-badge">{cat.icon}</div>
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: 14, color: '#1e293b' }}>{cat.name}</div>
-                      <div style={{ fontSize: 11, color: '#64748b' }}>Explore top deals</div>
-                    </div>
-                  </div>
-
-                  <div className="cat-chips-list">
-                    {cat.subcategories.map((sub, idx) => (
-                      <span
-                        key={idx}
-                        className="cat-chip-tag"
-                        onClick={() => executeSearch(sub)}
-                      >
-                        {sub}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </section>
-          )}
-
-          {/* VIEW: ACCOUNT */}
-          {appView === 'account' && (
-            <section className="account-container" style={{ padding: '10px 14px 70px 14px' }}>
-              <div className="account-header-card">
-                <div className="account-avatar">
-                  {user ? user.username.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 800, fontSize: 16 }}>{user ? user.username : 'Guest User'}</div>
-                  <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>+91 98765 43210 • Verified</div>
-                  <div style={{ marginTop: 4 }}>
-                    <span style={{ background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 800 }}>
-                      ⚡ Flipkart Plus Member
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  style={{ background: '#f1f5f9', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Switch
-                </button>
-              </div>
-
-              <div style={{
-                background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
-                color: 'white',
-                borderRadius: 10,
-                padding: '12px 16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 14
-              }}>
-                <div>
-                  <div style={{ fontSize: 11, opacity: 0.9 }}>Available Balance</div>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: '#fde047' }}>⚡ {user ? user.superCoins || 150 : 150} SuperCoins</div>
-                </div>
-                <button
-                  onClick={() => showToast('SuperCoins applied for discount')}
-                  style={{ background: '#fde047', color: '#1e3a8a', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
-                >
-                  Use Coins
-                </button>
-              </div>
-
-              <div className="account-quick-grid">
-                <div className="account-nav-card" onClick={fetchUserOrders}>
-                  <span style={{ fontSize: 22 }}>📦</span>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 13 }}>Orders</div>
-                    <div style={{ fontSize: 10, color: '#64748b' }}>{userOrders.length} placed</div>
-                  </div>
-                </div>
-
-                <div className="account-nav-card" onClick={() => setShowAddressModal(true)}>
-                  <span style={{ fontSize: 22 }}>🏠</span>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 13 }}>Addresses</div>
-                    <div style={{ fontSize: 10, color: '#64748b' }}>2 saved</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ background: 'white', borderRadius: 12, padding: 14, marginBottom: 14 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Past Orders</h3>
-                {userOrders.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '20px 0', color: '#888', fontSize: 12 }}>
-                    <p>No orders recorded.</p>
-                  </div>
-                ) : (
-                  userOrders.slice(0, 3).map((ord) => (
-                    <div key={ord.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: 10, marginBottom: 10, fontSize: 12 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
-                        <span>Order #{ord.id.slice(0, 8)}...</span>
-                        <span style={{ color: '#16a34a' }}>✓ {ord.status}</span>
-                      </div>
-                      <div style={{ color: '#64748b', margin: '2px 0' }}>
-                        Ekart Tracking: <strong style={{ color: '#2563eb' }}>{ord.trackingNumber}</strong>
-                      </div>
-                      <div style={{ fontWeight: 800, marginTop: 4 }}>
-                        Total: ₹{Number(ord.totalAmount).toLocaleString('en-IN')}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* FIXED BOTTOM APP NAVIGATION BAR (SCOPED TO MOBILE PHONE) */}
-          <nav className="flipkart-app-bottombar">
-            <div
-              className={`bottom-tab ${appView === 'home' ? 'active' : ''}`}
-              onClick={() => {
-                setAppView('home');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              <span className="bottom-tab-icon">🏠</span>
-              <span>Home</span>
             </div>
+          </section>
+        )}
 
-            <div
-              className={`bottom-tab ${appView === 'play' ? 'active' : ''}`}
-              onClick={() => {
-                setAppView('play');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              <span className="bottom-tab-icon">▶️</span>
-              <span>Play</span>
-            </div>
+        {/* FIXED BOTTOM APP NAVIGATION BAR (SCOPED TO MOBILE ONLY) */}
+        <nav className="flipkart-app-bottombar">
+          <div
+            className={`bottom-tab ${mobileAppView === 'home' ? 'active' : ''}`}
+            onClick={() => {
+              setMobileAppView('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <span className="bottom-tab-icon">🏠</span>
+            <span>Home</span>
+          </div>
 
-            <div
-              className={`bottom-tab ${appView === 'categories' ? 'active' : ''}`}
-              onClick={() => {
-                setAppView('categories');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              <span className="bottom-tab-icon">🔲</span>
-              <span>Categories</span>
-            </div>
+          <div
+            className={`bottom-tab ${mobileAppView === 'play' ? 'active' : ''}`}
+            onClick={() => {
+              setMobileAppView('play');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <span className="bottom-tab-icon">▶️</span>
+            <span>Play</span>
+          </div>
 
-            <div
-              className={`bottom-tab ${appView === 'account' ? 'active' : ''}`}
-              onClick={() => {
-                setAppView('account');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              <span className="bottom-tab-icon">👤</span>
-              <span>Account</span>
-            </div>
+          <div
+            className={`bottom-tab ${mobileAppView === 'categories' ? 'active' : ''}`}
+            onClick={() => {
+              setMobileAppView('categories');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <span className="bottom-tab-icon">🔲</span>
+            <span>Categories</span>
+          </div>
 
-            <div className="bottom-tab" onClick={() => setShowCartDrawer(true)}>
-              <span className="bottom-tab-icon">🛒</span>
-              {cartCount > 0 && <span className="cart-counter-dot">{cartCount}</span>}
-              <span>Cart</span>
-            </div>
-          </nav>
-        </div>
-      )}
+          <div
+            className={`bottom-tab ${mobileAppView === 'account' ? 'active' : ''}`}
+            onClick={() => {
+              setMobileAppView('account');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <span className="bottom-tab-icon">👤</span>
+            <span>Account</span>
+          </div>
+
+          <div className="bottom-tab" onClick={() => setShowCartDrawer(true)}>
+            <span className="bottom-tab-icon">🛒</span>
+            {cartCount > 0 && <span className="cart-counter-dot">{cartCount}</span>}
+            <span>Cart</span>
+          </div>
+        </nav>
+      </div>
 
       {/* =======================================================
-          BUYER-TO-SELLER LIVE CHAT DRAWER
+          BUYER-TO-SELLER LIVE CHAT DRAWER (SHARED)
           ======================================================= */}
       {showChatModal && chatProduct && (
         <div className="modal-overlay" onClick={() => setShowChatModal(false)}>
@@ -1793,7 +1759,7 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =======================================================
-          DELIVERY ADDRESS MODAL
+          DELIVERY ADDRESS MODAL (SHARED)
           ======================================================= */}
       {showAddressModal && (
         <div className="modal-overlay" onClick={() => setShowAddressModal(false)}>
@@ -1874,7 +1840,7 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =======================================================
-          CART DRAWER / SHEET
+          CART DRAWER / SHEET (SHARED)
           ======================================================= */}
       {showCartDrawer && (
         <div className="modal-overlay" onClick={() => setShowCartDrawer(false)}>
@@ -1969,7 +1935,7 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =======================================================
-          PRODUCT DETAILS SHEET WITH REVIEWS & CUSTOMER Q&A
+          PRODUCT DETAILS SHEET WITH REVIEWS & CUSTOMER Q&A (SHARED)
           ======================================================= */}
       {selectedProduct && (
         <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
@@ -2060,7 +2026,7 @@ export default function Home({ initialProducts }) {
                 <span>Chat with Official Brand Seller (Live Support)</span>
               </button>
 
-              {/* Primary Actions: Add to Cart & Buy Now */}
+              {/* Primary Actions */}
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   className="btn-card-add"
@@ -2221,7 +2187,7 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =======================================================
-          CHECKOUT MODAL
+          CHECKOUT MODAL (SHARED)
           ======================================================= */}
       {showCheckoutModal && (
         <div className="modal-overlay" onClick={() => setShowCheckoutModal(false)}>
@@ -2285,7 +2251,7 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =======================================================
-          ORDER SUCCESS POPUP
+          ORDER SUCCESS POPUP (SHARED)
           ======================================================= */}
       {orderSuccess && (
         <div className="modal-overlay" onClick={() => setOrderSuccess(null)}>
@@ -2314,7 +2280,7 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =======================================================
-          USER AUTH MODAL
+          USER AUTH MODAL (SHARED)
           ======================================================= */}
       {showAuthModal && (
         <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>

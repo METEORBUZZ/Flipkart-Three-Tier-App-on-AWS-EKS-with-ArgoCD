@@ -26,56 +26,27 @@ body {
 }
 
 /* =======================================================
-   RESPONSIVE DEVICE BAR (MODE SWITCHER)
+   AUTOMATIC RESPONSIVE SYSTEM
+   Automatically adapts based on viewport size:
+   - Mobile: < 768px
+   - Tablet: 768px - 1023px
+   - Laptop / Desktop: >= 1024px
    ======================================================= */
-.device-mode-bar {
-  background: #0f172a;
-  color: white;
-  padding: 6px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  z-index: 3000;
-  position: relative;
+.mobile-only-view {
+  display: block;
 }
 
-.device-switcher-group {
-  display: flex;
-  gap: 6px;
-  align-items: center;
+.desktop-only-view {
+  display: none;
 }
 
-.device-btn {
-  background: rgba(255,255,255,0.12);
-  color: #cbd5e1;
-  border: 1px solid rgba(255,255,255,0.2);
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.device-btn.active {
-  background: var(--fk-yellow);
-  color: #0f172a;
-  border-color: var(--fk-yellow);
-}
-
-.portal-link-pill {
-  color: #38bdf8;
-  text-decoration: none;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: rgba(56, 189, 248, 0.15);
-  margin-left: 6px;
-}
-.portal-link-pill:hover {
-  background: rgba(56, 189, 248, 0.3);
+@media (min-width: 768px) {
+  .mobile-only-view {
+    display: none !important;
+  }
+  .desktop-only-view {
+    display: block !important;
+  }
 }
 
 /* =======================================================
