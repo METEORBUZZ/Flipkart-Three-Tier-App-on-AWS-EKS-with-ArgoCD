@@ -775,13 +775,13 @@ export default function Home({ initialProducts }) {
                 </button>
               )}
 
-              <a href="http://10.195.18.98:4100" target="_blank" rel="noreferrer" className="desktop-nav-link" title="Open Seller Portal">
+              <div
+                className="desktop-nav-link"
+                onClick={() => alert('Flipkart Seller Network: Merchant onboarding is available for verified sellers.')}
+                title="Become a Seller"
+              >
                 🏪 Become a Seller
-              </a>
-
-              <a href="http://10.195.18.98:4200" target="_blank" rel="noreferrer" className="desktop-nav-link" title="Open SuperAdmin Console">
-                🛡️ Admin Console
-              </a>
+              </div>
 
               <div className="desktop-nav-link" onClick={() => setShowOrdersModal(true)}>
                 📦 Orders ({userOrders.length})
@@ -1058,20 +1058,18 @@ export default function Home({ initialProducts }) {
             </div>
 
             <div>
-              <div className="footer-col-title">MNC Microservices Architecture</div>
+              <div className="footer-col-title">Registered Office Address</div>
               <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: 12 }}>
-                Powered by 9 decoupled Docker microservices, Ekart Logistics engine, PostgreSQL 16 catalog, Redis 7 fast cart caching, and Go payment gateway.
+                Flipkart Internet Private Limited,<br />
+                Buildings Alyssa, Begonia & Clove Embassy Tech Village,<br />
+                Outer Ring Road, Devarabeesanahalli Village,<br />
+                Bengaluru, 560103, Karnataka, India
               </p>
-              <div style={{ marginTop: 10 }}>
-                <a href="http://10.195.18.98:4100" target="_blank" rel="noreferrer" style={{ color: '#ffe500', fontWeight: 800 }}>
-                  🏪 Open Seller Portal (Port 4100) &gt;
-                </a>
-              </div>
             </div>
           </div>
 
           <div className="footer-bottom-row">
-            <div>© 2026 Flipkart Clone. All rights reserved. Built for MNC pair testing.</div>
+            <div>© 2026 Flipkart Clone. All rights reserved.</div>
             <div style={{ display: 'flex', gap: 14 }}>
               <span>⚡ Ekart Verified</span>
               <span>🛡️ PCI-DSS Compliant</span>
@@ -1616,28 +1614,18 @@ export default function Home({ initialProducts }) {
               )}
             </div>
 
-            {/* Portal links in Mobile Account Tab */}
+            {/* Account Services & Support in Mobile Account Tab */}
             <div style={{ background: 'white', borderRadius: 12, padding: 14 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>MNC Partner Portals</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Account Services & Support</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <a
-                  href="http://10.195.18.98:4100"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 8, textDecoration: 'none', color: '#1e293b', fontSize: 12, fontWeight: 700 }}
-                >
-                  <span>🏪 Seller Portal (Port 4100)</span>
-                  <span style={{ color: '#2563eb' }}>Open →</span>
-                </a>
-                <a
-                  href="http://10.195.18.98:4200"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 8, textDecoration: 'none', color: '#1e293b', fontSize: 12, fontWeight: 700 }}
-                >
-                  <span>🛡️ SuperAdmin Console (Port 4200)</span>
-                  <span style={{ color: '#2563eb' }}>Open →</span>
-                </a>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 8, color: '#1e293b', fontSize: 12, fontWeight: 700 }}>
+                  <span>🎧 24x7 Customer Support</span>
+                  <span style={{ color: '#2563eb' }}>Help →</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 8, color: '#1e293b', fontSize: 12, fontWeight: 700 }}>
+                  <span>🛡️ Privacy & Account Security</span>
+                  <span style={{ color: '#2563eb' }}>Settings →</span>
+                </div>
               </div>
             </div>
           </section>

@@ -51,12 +51,12 @@ The frontend architecture adheres strictly to Flipkart's responsive design syste
 ### 2.1 Viewport Breakpoints & Responsive Behavior
 
 1. **Desktop & Laptop Screens (`width >= 1024px`)**:
-   - **Header**: Official Flipkart Blue (`#2874f0`). Includes logo with the signature yellow star (`Explore Plus ✦`), a wide 620px search bar with instant autocomplete, user account badge, direct links to *Become a Seller (Port 4100)* and *Admin Console (Port 4200)*, *Orders*, and a shopping *Cart* counter pill.
+   - **Header**: Official Flipkart Blue (`#2874f0`). Includes logo with the signature yellow star (`Explore Plus ✦`), a wide 620px search bar with instant autocomplete, user account badge, *Become a Seller* merchant link, *Orders*, and a shopping *Cart* counter pill. (Admin Console and internal infrastructure ports are completely hidden from public buyer view for MNC security standards).
    - **Category Navigation Ribbon**: Horizontal white bar containing 8 distinct Flipkart categories: *Top Offers*, *Mobiles*, *Electronics*, *Fashion*, *Home & Furniture*, *Appliances*, *Travel*, and *Beauty, Toys & More*.
    - **Hero Carousel Banner**: Full-width 1360px Big Billion Days banner with bank offer tags (HDFC & SBI 10% Instant Discount).
    - **Deals of the Day**: Live flash countdown timer: `Starts in [ 01 ] Hr : [ 46 ] Min : [ 00 ] Sec`.
    - **Product Grid**: **4 columns** on standard desktop and **5 columns** on ultra-wide monitors. Cards feature wishlist heart icons, F-Assured badges, star ratings, and instant *Add to Cart* and *Buy Now* buttons.
-   - **Desktop Footer**: Multi-column footer covering *About*, *Help*, *Consumer Policy*, *MNC Architecture*, and Ekart Logistics verified badges.
+   - **Desktop Footer**: Multi-column footer covering *About*, *Help*, *Consumer Policy*, *Registered Office Address*, and Ekart Logistics verified badges.
    - **Mobile Bottom Bar**: Explicitly hidden via CSS (`display: none !important;`).
 
 2. **Tablet Screens (`768px <= width < 1024px`)**:
