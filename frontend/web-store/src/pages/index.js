@@ -620,33 +620,37 @@ export default function Home({ initialProducts }) {
   };
 
   const handleSendOtp = async (e) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setAuthError('');
-    const cleanPhone = authPhone.replace(/\D/g, '');
+    const cleanPhone = (authPhone || '').replace(/\D/g, '');
     if (cleanPhone.length < 10) {
       setAuthError('Please enter a valid 10-digit mobile number');
       return;
     }
     setIsSendingOtp(true);
     try {
-      const res = await fetch('/api/v1/users/otp/send/', {
+      const res = await fetch('/api/v1/users/otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: cleanPhone, role: 'CUSTOMER' })
       });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.status === 'success') {
         setOtpSent(true);
         setActiveRefId(data.ref_id || `FK-${Date.now().toString().slice(-6)}`);
         if (data.sms) {
           setIncomingSms(data.sms);
-          setTimeout(() => setIncomingSms(null), 12000);
+          setTimeout(() => setIncomingSms(null), 15000);
         }
-        showToast(`OTP sent via SMS to +91 ${cleanPhone}`);
+        showToast(`✓ OTP sent via SMS to +91 ${cleanPhone}`);
       } else {
-        setAuthError(data.error || 'Failed to send OTP');
+        setAuthError(data?.error || data?.message || 'Failed to send OTP. Please try again.');
       }
     } catch (err) {
+      console.error('OTP Send error:', err);
       setAuthError('Could not connect to authentication gateway. Please try again.');
     } finally {
       setIsSendingOtp(false);
@@ -654,22 +658,25 @@ export default function Home({ initialProducts }) {
   };
 
   const handleVerifyOtp = async (e) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setAuthError('');
     if (!authOtp || authOtp.trim().length < 4) {
-      setAuthError('Please enter the 6-digit OTP');
+      setAuthError('Please enter the 6-digit OTP received via SMS');
       return;
     }
     setIsVerifyingOtp(true);
-    const cleanPhone = authPhone.replace(/\D/g, '');
+    const cleanPhone = (authPhone || '').replace(/\D/g, '');
     try {
-      const res = await fetch('/api/v1/users/otp/verify/', {
+      const res = await fetch('/api/v1/users/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: cleanPhone, otp: authOtp.trim(), role: 'CUSTOMER' })
       });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.user) {
         const loggedUser = {
           id: data.user.id,
           username: data.user.username,
@@ -683,21 +690,11 @@ export default function Home({ initialProducts }) {
         setAuthOtp('');
         showToast(`✓ Welcome to Flipkart, ${loggedUser.username}!`);
       } else {
-        setAuthError(data.error || 'Invalid OTP. Please try again.');
+        setAuthError(data?.error || 'Invalid OTP. Please enter the valid OTP received via SMS.');
       }
     } catch (err) {
-      const loggedUser = {
-        id: 'usr-' + cleanPhone.slice(-4),
-        username: `User_${cleanPhone.slice(-4)}`,
-        phone: cleanPhone,
-        superCoins: 150
-      };
-      setUser(loggedUser);
-      localStorage.setItem('fk_user', JSON.stringify(loggedUser));
-      setShowAuthModal(false);
-      setOtpSent(false);
-      setAuthOtp('');
-      showToast(`✓ Welcome to Flipkart, ${loggedUser.username}!`);
+      console.error('OTP Verify error:', err);
+      setAuthError('Could not verify OTP. Please try again.');
     } finally {
       setIsVerifyingOtp(false);
     }
@@ -2489,6 +2486,7 @@ export default function Home({ initialProducts }) {
                     <button
                       type="submit"
                       disabled={isSendingOtp}
+                      onClick={handleSendOtp}
                       style={{ width: '100%', background: '#fb641b', color: 'white', border: 'none', padding: 12, borderRadius: 6, fontWeight: 800, fontSize: 14, cursor: 'pointer', transition: 'background 0.2s' }}
                     >
                       {isSendingOtp ? 'SENDING OTP...' : 'CONTINUE & REQUEST OTP'}
@@ -2528,6 +2526,7 @@ export default function Home({ initialProducts }) {
                     <button
                       type="submit"
                       disabled={isVerifyingOtp}
+                      onClick={handleVerifyOtp}
                       style={{ width: '100%', background: '#fb641b', color: 'white', border: 'none', padding: 12, borderRadius: 6, fontWeight: 800, fontSize: 14, cursor: 'pointer', marginBottom: 10 }}
                     >
                       {isVerifyingOtp ? 'VERIFYING...' : 'VERIFY OTP & LOGIN'}

@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  trailingSlash: false,
+  skipTrailingSlashRedirect: true,
   output: 'standalone', // Drastically reduces Docker image size by pruning node_modules
   async rewrites() {
     return [

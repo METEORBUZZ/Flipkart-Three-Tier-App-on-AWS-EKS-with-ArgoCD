@@ -918,7 +918,7 @@
       sendBtn.innerText = 'SENDING OTP...';
 
       try {
-        const res = await fetch('/api/v1/users/otp/send/', {
+        const res = await fetch('/api/v1/users/otp/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: cleanPhone, role: 'SELLER' })
@@ -966,7 +966,7 @@
       verifyBtn.innerText = 'VERIFYING...';
 
       try {
-        const res = await fetch('/api/v1/users/otp/verify/', {
+        const res = await fetch('/api/v1/users/otp/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: activeSellerPhone, otp: otp, role: 'SELLER' })
