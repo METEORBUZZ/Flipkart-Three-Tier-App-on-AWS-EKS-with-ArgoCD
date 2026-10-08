@@ -144,12 +144,16 @@ export default function Home({ initialProducts }) {
   const [currentAddress, setCurrentAddress] = useState('HOME N G hostel A, Gangotri, Visnagar Road...');
   const [showAddressModal, setShowAddressModal] = useState(false);
 
-  // User Auth State
+  // User Auth State with Mobile No + OTP
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
-  const [authUsername, setAuthUsername] = useState('rahul_sharma');
-  const [authPassword, setAuthPassword] = useState('secret123');
+  const [authPhone, setAuthPhone] = useState('9876543210');
+  const [authOtp, setAuthOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpPreview, setOtpPreview] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [authError, setAuthError] = useState('');
 
   // Cart State (Redis backend)
   const [cartItems, setCartItems] = useState([]);
@@ -614,17 +618,95 @@ export default function Home({ initialProducts }) {
     }
   };
 
-  const handleAuthSubmit = (e) => {
-    e.preventDefault();
-    const newUser = {
-      id: 'usr-' + Date.now().toString(36),
-      username: authUsername,
-      superCoins: 150
-    };
-    setUser(newUser);
-    localStorage.setItem('fk_user', JSON.stringify(newUser));
+  const handleSendOtp = async (e) => {
+    if (e) e.preventDefault();
+    setAuthError('');
+    const cleanPhone = authPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      setAuthError('Please enter a valid 10-digit mobile number');
+      return;
+    }
+    setIsSendingOtp(true);
+    try {
+      const res = await fetch('/api/v1/users/otp/send/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanPhone, role: 'CUSTOMER' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOtpSent(true);
+        setOtpPreview(data.otp_preview || '123456');
+        showToast(`OTP sent to +91 ${cleanPhone}`);
+      } else {
+        setAuthError(data.error || 'Failed to send OTP');
+      }
+    } catch (err) {
+      setOtpSent(true);
+      setOtpPreview('123456');
+      showToast(`OTP sent to +91 ${cleanPhone}`);
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    if (e) e.preventDefault();
+    setAuthError('');
+    if (!authOtp || authOtp.trim().length < 4) {
+      setAuthError('Please enter the 6-digit OTP');
+      return;
+    }
+    setIsVerifyingOtp(true);
+    const cleanPhone = authPhone.replace(/\D/g, '');
+    try {
+      const res = await fetch('/api/v1/users/otp/verify/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanPhone, otp: authOtp.trim(), role: 'CUSTOMER' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const loggedUser = {
+          id: data.user.id,
+          username: data.user.username,
+          phone: data.user.phone,
+          superCoins: data.user.super_coins || 150
+        };
+        setUser(loggedUser);
+        localStorage.setItem('fk_user', JSON.stringify(loggedUser));
+        setShowAuthModal(false);
+        setOtpSent(false);
+        setAuthOtp('');
+        showToast(`✓ Welcome to Flipkart, ${loggedUser.username}!`);
+      } else {
+        setAuthError(data.error || 'Invalid OTP. Please try again.');
+      }
+    } catch (err) {
+      const loggedUser = {
+        id: 'usr-' + cleanPhone.slice(-4),
+        username: `User_${cleanPhone.slice(-4)}`,
+        phone: cleanPhone,
+        superCoins: 150
+      };
+      setUser(loggedUser);
+      localStorage.setItem('fk_user', JSON.stringify(loggedUser));
+      setShowAuthModal(false);
+      setOtpSent(false);
+      setAuthOtp('');
+      showToast(`✓ Welcome to Flipkart, ${loggedUser.username}!`);
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('fk_user');
+    setUser(null);
     setShowAuthModal(false);
-    showToast(`Welcome back, ${authUsername}!`);
+    setOtpSent(false);
+    setAuthOtp('');
+    showToast('Logged out successfully');
   };
 
   const handlePlaceOrder = async () => {
@@ -2256,56 +2338,163 @@ export default function Home({ initialProducts }) {
       )}
 
       {/* =======================================================
-          USER AUTH MODAL (SHARED)
+          USER AUTH MODAL - FLIPKART MOBILE + OTP LOGIN (SHARED)
           ======================================================= */}
       {showAuthModal && (
         <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
-          <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 380 }}>
+          <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, borderRadius: 12 }}>
             <button className="modal-close-btn" onClick={() => setShowAuthModal(false)}>✕</button>
 
-            <h3 style={{ marginBottom: 4, fontSize: 16 }}>{authMode === 'login' ? 'Login to Flipkart' : 'Create an Account'}</h3>
-            <p style={{ color: '#777', fontSize: 12, marginBottom: 14 }}>
-              Access your Orders, Wishlist, and SuperCoins
-            </p>
+            {user ? (
+              /* ALREADY LOGGED IN: PROFILE & LOGOUT */
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#2874f0', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800 }}>
+                    {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 800 }}>{user.username}</h3>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>+91 {user.phone || authPhone}</div>
+                  </div>
+                </div>
 
-            <form onSubmit={handleAuthSubmit}>
-              <div style={{ marginBottom: 10 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#555', display: 'block', marginBottom: 3 }}>
-                  Username / Mobile:
-                </label>
-                <input
-                  type="text"
-                  value={authUsername}
-                  onChange={(e) => setAuthUsername(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #ccc', borderRadius: 4, fontSize: 13 }}
-                  required
-                />
+                <div style={{ background: '#eff6ff', padding: 12, borderRadius: 8, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#1e40af' }}>SUPERCOIN BALANCE</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: '#1e3a8a' }}>⚡ {user.superCoins || 150} 🪙</div>
+                  </div>
+                  <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 700 }}>Flipkart Plus Member</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <button
+                    onClick={() => { setShowAuthModal(false); setShowOrdersModal(true); }}
+                    style={{ width: '100%', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: 10, borderRadius: 6, fontWeight: 700, fontSize: 13, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between' }}
+                  >
+                    <span>📦 My Orders & Tracking</span>
+                    <span>→</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setShowAuthModal(false); setShowAddressModal(true); }}
+                    style={{ width: '100%', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: 10, borderRadius: 6, fontWeight: 700, fontSize: 13, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between' }}
+                  >
+                    <span>📍 Saved Delivery Addresses</span>
+                    <span>→</span>
+                  </button>
+
+                  <button
+                    onClick={handleLogout}
+                    style={{ width: '100%', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', padding: 10, borderRadius: 6, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginTop: 8 }}
+                  >
+                    🔒 Sign Out / Switch Account
+                  </button>
+                </div>
               </div>
+            ) : (
+              /* NOT LOGGED IN: MOBILE NO + OTP FLOW */
+              <div>
+                <div style={{ background: '#2874f0', margin: '-20px -20px 16px -20px', padding: '18px 20px', borderTopLeftRadius: 12, borderTopRightRadius: 12, color: 'white' }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 800 }}>Flipkart Mobile Login</h3>
+                  <p style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>
+                    Get access to your Orders, Wishlist & Recommendations
+                  </p>
+                </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#555', display: 'block', marginBottom: 3 }}>
-                  Password:
-                </label>
-                <input
-                  type="password"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #ccc', borderRadius: 4, fontSize: 13 }}
-                  required
-                />
+                {authError && (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '8px 12px', borderRadius: 6, fontSize: 12, marginBottom: 12, fontWeight: 600 }}>
+                    ✕ {authError}
+                  </div>
+                )}
+
+                {!otpSent ? (
+                  /* STEP 1: ENTER MOBILE NUMBER */
+                  <form onSubmit={handleSendOtp}>
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>
+                        ENTER MOBILE NUMBER
+                      </label>
+                      <div style={{ display: 'flex', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden' }}>
+                        <span style={{ background: '#f8fafc', padding: '9px 12px', fontSize: 13, fontWeight: 700, color: '#475569', borderRight: '1px solid #cbd5e1' }}>
+                          +91
+                        </span>
+                        <input
+                          type="tel"
+                          maxLength="10"
+                          placeholder="10-digit mobile number"
+                          value={authPhone}
+                          onChange={(e) => setAuthPhone(e.target.value)}
+                          style={{ flex: 1, padding: '9px 12px', border: 'none', fontSize: 14, outline: 'none', fontWeight: 600 }}
+                          required
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+
+                    <p style={{ fontSize: 11, color: '#64748b', marginBottom: 16, lineHeight: 1.4 }}>
+                      By continuing, you agree to Flipkart's <span style={{ color: '#2874f0', fontWeight: 700 }}>Terms of Use</span> and <span style={{ color: '#2874f0', fontWeight: 700 }}>Privacy Policy</span>.
+                    </p>
+
+                    <button
+                      type="submit"
+                      disabled={isSendingOtp}
+                      style={{ width: '100%', background: '#fb641b', color: 'white', border: 'none', padding: 12, borderRadius: 6, fontWeight: 800, fontSize: 14, cursor: 'pointer', transition: 'background 0.2s' }}
+                    >
+                      {isSendingOtp ? 'SENDING OTP...' : 'CONTINUE & REQUEST OTP'}
+                    </button>
+                  </form>
+                ) : (
+                  /* STEP 2: VERIFY OTP */
+                  <form onSubmit={handleVerifyOtp}>
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#475569' }}>ENTER 6-DIGIT OTP</span>
+                        <span onClick={() => { setOtpSent(false); setAuthError(''); }} style={{ fontSize: 11, color: '#2874f0', fontWeight: 700, cursor: 'pointer' }}>
+                          Edit Mobile
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                        OTP sent to <strong>+91 {authPhone}</strong>
+                      </div>
+                      <input
+                        type="text"
+                        maxLength="6"
+                        placeholder="••••••"
+                        value={authOtp}
+                        onChange={(e) => setAuthOtp(e.target.value)}
+                        style={{ width: '100%', padding: '11px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 18, textAlign: 'center', letterSpacing: 8, fontWeight: 800, outline: 'none' }}
+                        required
+                        autoFocus
+                      />
+                    </div>
+
+                    {otpPreview && (
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '6px 10px', borderRadius: 4, fontSize: 11, fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>
+                        ⚡ OTP Preview: <span style={{ fontSize: 13, letterSpacing: 1 }}>{otpPreview}</span> (or use 123456)
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isVerifyingOtp}
+                      style={{ width: '100%', background: '#fb641b', color: 'white', border: 'none', padding: 12, borderRadius: 6, fontWeight: 800, fontSize: 14, cursor: 'pointer', marginBottom: 10 }}
+                    >
+                      {isVerifyingOtp ? 'VERIFYING...' : 'VERIFY OTP & LOGIN'}
+                    </button>
+
+                    <div style={{ textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        style={{ background: 'none', border: 'none', color: '#2874f0', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Resend OTP
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
-
-              <button
-                type="submit"
-                style={{ width: '100%', background: '#fb641b', color: 'white', border: 'none', padding: 10, borderRadius: 4, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
-              >
-                {authMode === 'login' ? 'Continue / Login' : 'Sign Up'}
-              </button>
-            </form>
-
-            <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: '#2874f0', cursor: 'pointer' }} onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}>
-              {authMode === 'login' ? 'New to Flipkart? Create an account' : 'Existing user? Log in'}
-            </div>
+            )}
           </div>
         </div>
       )}

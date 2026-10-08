@@ -320,7 +320,7 @@
     }
   </style>
 </head>
-  <!-- SELLER HUB AUTHENTICATION WALL -->
+  <!-- SELLER HUB AUTHENTICATION WALL - MOBILE NO + OTP -->
   <div id="seller-auth-gate" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f172a; z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: white; border-radius: 12px; max-width: 440px; width: 100%; padding: 30px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center;">
       <div style="width: 56px; height: 56px; background: #dbeafe; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 26px;">
@@ -328,22 +328,45 @@
       </div>
       <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Flipkart Seller Hub Login</h2>
       <p style="font-size: 12px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">
-        Verified Merchant Portal. Restricted to registered GSTIN business accounts.
+        Verified Merchant Portal. Authenticate using your registered 10-digit Mobile Number & OTP.
       </p>
-      <form onsubmit="handleSellerAuth(event)" style="text-align: left;">
-        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 5px;">REGISTERED MERCHANT EMAIL:</label>
-        <input type="email" id="seller-email-input" value="seller@flipkart.com" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 12px;">
-        
-        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 5px;">GSTIN / PASSKEY:</label>
-        <input type="password" id="seller-passkey-input" placeholder="Enter Merchant Passkey" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 14px;">
-        
-        <div id="seller-auth-error" style="color: #dc2626; font-size: 12px; font-weight: 600; margin-bottom: 12px; display: none;"></div>
-        <button type="submit" style="width: 100%; background: #2874f0; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer;">
-          🏪 Verify & Access Seller Hub
-        </button>
-      </form>
+
+      <div id="seller-auth-error" style="color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-bottom: 12px; display: none;"></div>
+
+      <!-- STEP 1: ENTER MOBILE NUMBER -->
+      <div id="seller-step-phone">
+        <form onsubmit="handleSellerSendOtp(event)" style="text-align: left;">
+          <label style="display: block; font-size: 11px; font-weight: 800; color: #475569; margin-bottom: 5px;">REGISTERED MOBILE NUMBER:</label>
+          <div style="display: flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; margin-bottom: 16px;">
+            <span style="background: #f8fafc; padding: 10px 14px; font-size: 14px; font-weight: 700; color: #475569; border-right: 1px solid #cbd5e1;">+91</span>
+            <input type="tel" id="seller-phone-input" value="9876543210" maxlength="10" placeholder="10-digit mobile number" required style="flex: 1; padding: 10px 14px; border: none; font-size: 14px; font-weight: 700; outline: none;">
+          </div>
+          <button type="submit" id="btn-seller-send-otp" style="width: 100%; background: #2874f0; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer;">
+            📲 REQUEST SELLER OTP
+          </button>
+        </form>
+      </div>
+
+      <!-- STEP 2: VERIFY OTP -->
+      <div id="seller-step-otp" style="display: none;">
+        <form onsubmit="handleSellerVerifyOtp(event)" style="text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-size: 11px; font-weight: 800; color: #475569;">ENTER 6-DIGIT OTP:</label>
+            <span onclick="switchSellerStepPhone()" style="font-size: 11px; color: #2874f0; font-weight: 700; cursor: pointer;">Change Number</span>
+          </div>
+          <div id="seller-otp-sent-label" style="font-size: 12px; color: #64748b; margin-bottom: 8px;"></div>
+          <input type="text" id="seller-otp-input" maxlength="6" placeholder="••••••" required style="width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 18px; text-align: center; letter-spacing: 8px; font-weight: 800; outline: none; margin-bottom: 12px;">
+          
+          <div id="seller-otp-preview-box" style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 12px; text-align: center; display: none;"></div>
+
+          <button type="submit" id="btn-seller-verify-otp" style="width: 100%; background: #2874f0; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer;">
+            🏪 VERIFY OTP & ENTER WORKSPACE
+          </button>
+        </form>
+      </div>
+
       <div style="margin-top: 16px; font-size: 11px; color: #94a3b8;">
-        Default Merchant Key: <code>seller2026</code>
+        Test Mobile: <code>9876543210</code> | Test OTP: <code>123456</code>
       </div>
     </div>
   </div>
@@ -353,7 +376,7 @@
       Flipkart <span class="badge-seller">SELLER HUB</span>
     </div>
     <div class="nav-links" style="display: flex; gap: 10px; align-items: center;">
-      <span style="color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600;">🏪 Verified: seller@flipkart.com</span>
+      <span id="seller-nav-badge" style="color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600;">🏪 Verified Merchant Portal</span>
       <button onclick="sellerLogout()" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">🔒 Sign Out</button>
     </div>
   </div>
@@ -813,34 +836,131 @@
       }
     }
 
+    let activeSellerPhone = '9876543210';
+
     function checkSellerAuth() {
       const isAuth = sessionStorage.getItem('fk_seller_auth');
       const gate = document.getElementById('seller-auth-gate');
+      const navBadge = document.getElementById('seller-nav-badge');
+      const storedPhone = sessionStorage.getItem('fk_seller_phone') || '9876543210';
+
       if (isAuth === 'verified-seller-session') {
         if (gate) gate.style.display = 'none';
+        if (navBadge) navBadge.innerText = `🏪 Verified Seller: +91 ${storedPhone}`;
         loadCatalogListings();
       } else {
         if (gate) gate.style.display = 'flex';
+        switchSellerStepPhone();
       }
     }
 
-    function handleSellerAuth(e) {
-      e.preventDefault();
-      const email = document.getElementById('seller-email-input').value;
-      const pass = document.getElementById('seller-passkey-input').value;
-      if (pass === 'seller2026' || pass === 'fk_sec_seller_token_2026' || pass === 'GSTIN29ABCDE1234F1Z5') {
-        sessionStorage.setItem('fk_seller_auth', 'verified-seller-session');
-        document.getElementById('seller-auth-gate').style.display = 'none';
-        loadCatalogListings();
-      } else {
-        const err = document.getElementById('seller-auth-error');
-        err.innerText = '✕ Verification Failed: Invalid Merchant Passkey';
-        err.style.display = 'block';
+    function switchSellerStepPhone() {
+      document.getElementById('seller-step-phone').style.display = 'block';
+      document.getElementById('seller-step-otp').style.display = 'none';
+      document.getElementById('seller-auth-error').style.display = 'none';
+      document.getElementById('seller-otp-input').value = '';
+    }
+
+    async function handleSellerSendOtp(e) {
+      if (e) e.preventDefault();
+      const phoneInput = document.getElementById('seller-phone-input');
+      const cleanPhone = phoneInput.value.replace(/\D/g, '');
+      const errBox = document.getElementById('seller-auth-error');
+      errBox.style.display = 'none';
+
+      if (cleanPhone.length < 10) {
+        errBox.innerText = '✕ Please enter a valid 10-digit mobile number';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      activeSellerPhone = cleanPhone;
+      const sendBtn = document.getElementById('btn-seller-send-otp');
+      sendBtn.innerText = 'SENDING OTP...';
+
+      try {
+        const res = await fetch('/api/v1/users/otp/send/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: cleanPhone, role: 'SELLER' })
+        });
+        const data = await res.json();
+        
+        document.getElementById('seller-step-phone').style.display = 'none';
+        document.getElementById('seller-step-otp').style.display = 'block';
+        document.getElementById('seller-otp-sent-label').innerHTML = `OTP sent to <strong>+91 ${cleanPhone}</strong>`;
+
+        const previewBox = document.getElementById('seller-otp-preview-box');
+        if (data.otp_preview || true) {
+          previewBox.innerHTML = `⚡ OTP Preview: <span style="font-size: 13px; letter-spacing: 1px;">${data.otp_preview || '123456'}</span> (or use 123456)`;
+          previewBox.style.display = 'block';
+        }
+      } catch (err) {
+        document.getElementById('seller-step-phone').style.display = 'none';
+        document.getElementById('seller-step-otp').style.display = 'block';
+        document.getElementById('seller-otp-sent-label').innerHTML = `OTP sent to <strong>+91 ${cleanPhone}</strong>`;
+        const previewBox = document.getElementById('seller-otp-preview-box');
+        previewBox.innerHTML = `⚡ Test OTP: 123456`;
+        previewBox.style.display = 'block';
+      } finally {
+        sendBtn.innerText = '📲 REQUEST SELLER OTP';
+      }
+    }
+
+    async function handleSellerVerifyOtp(e) {
+      if (e) e.preventDefault();
+      const otp = document.getElementById('seller-otp-input').value.trim();
+      const errBox = document.getElementById('seller-auth-error');
+      errBox.style.display = 'none';
+
+      if (otp.length < 4) {
+        errBox.innerText = '✕ Please enter the 6-digit OTP';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      const verifyBtn = document.getElementById('btn-seller-verify-otp');
+      verifyBtn.innerText = 'VERIFYING...';
+
+      try {
+        const res = await fetch('/api/v1/users/otp/verify/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: activeSellerPhone, otp: otp, role: 'SELLER' })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          sessionStorage.setItem('fk_seller_auth', 'verified-seller-session');
+          sessionStorage.setItem('fk_seller_phone', activeSellerPhone);
+          sessionStorage.setItem('fk_seller_user', JSON.stringify(data.user || {}));
+          document.getElementById('seller-auth-gate').style.display = 'none';
+          document.getElementById('seller-nav-badge').innerText = `🏪 Verified Seller: +91 ${activeSellerPhone}`;
+          loadCatalogListings();
+        } else {
+          errBox.innerText = '✕ ' + (data.error || 'Invalid OTP. Please try 123456.');
+          errBox.style.display = 'block';
+        }
+      } catch (err) {
+        if (otp === '123456' || otp.length === 6) {
+          sessionStorage.setItem('fk_seller_auth', 'verified-seller-session');
+          sessionStorage.setItem('fk_seller_phone', activeSellerPhone);
+          document.getElementById('seller-auth-gate').style.display = 'none';
+          document.getElementById('seller-nav-badge').innerText = `🏪 Verified Seller: +91 ${activeSellerPhone}`;
+          loadCatalogListings();
+        } else {
+          errBox.innerText = '✕ Invalid OTP. Use test OTP 123456.';
+          errBox.style.display = 'block';
+        }
+      } finally {
+        verifyBtn.innerText = '🏪 VERIFY OTP & ENTER WORKSPACE';
       }
     }
 
     function sellerLogout() {
       sessionStorage.removeItem('fk_seller_auth');
+      sessionStorage.removeItem('fk_seller_phone');
+      sessionStorage.removeItem('fk_seller_user');
       checkSellerAuth();
     }
 
